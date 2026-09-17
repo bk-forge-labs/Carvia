@@ -24,7 +24,7 @@ function requireEnv(name: string): string {
   return value;
 }
 
-const BASE_URL = requireEnv('NEXT_PUBLIC_API_BASE_URL');
+const BASE_URL = process.env.API_INTERNAL_BASE_URL || requireEnv('NEXT_PUBLIC_API_BASE_URL');
 
 /*If BASE_URL ends with / and path starts with /, will get //.
 

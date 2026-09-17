@@ -1,0 +1,80 @@
+[
+  {
+    "name": "Audi",
+    "slug": "audi",
+    "image": {
+      "source": "https://www.carlogos.org/car-logos/audi-logo-2016-640.png",
+      "thumb": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/audi.png",
+      "optimized": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/audi.png",
+      "original": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/original/audi.png",
+      "localThumb": "./thumb/audi.png",
+      "localOptimized": "./optimized/audi.png",
+      "localOriginal": "./original/audi.png"
+    }
+  },
+  {
+    "name": "BMW",
+    "slug": "bmw",
+    "image": {
+      "source": "https://www.carlogos.org/car-logos/bmw-logo-2020-gray.png",
+      "thumb": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bmw.png",
+      "optimized": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/bmw.png",
+      "original": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/original/bmw.png",
+      "localThumb": "./thumb/bmw.png",
+      "localOptimized": "./optimized/bmw.png",
+      "localOriginal": "./original/bmw.png"
+    }
+  },
+  {
+    "name": "Mercedes-Benz",
+    "slug": "mercedes-benz",
+    "image": {
+      "source": "https://www.carlogos.org/logo/Mercedes-Benz-logo-2011-1920x1080.png",
+      "thumb": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mercedes-benz.png",
+      "optimized": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/mercedes-benz.png",
+      "original": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/original/mercedes-benz.png",
+      "localThumb": "./thumb/mercedes-benz.png",
+      "localOptimized": "./optimized/mercedes-benz.png",
+      "localOriginal": "./original/mercedes-benz.png"
+    }
+  },
+  {
+    "name": "Porsche",
+    "slug": "porsche",
+    "image": {
+      "source": "https://www.carlogos.org/car-logos/porsche-logo-2014-full-640.png",
+      "thumb": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/porsche.png",
+      "optimized": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/porsche.png",
+      "original": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/original/porsche.png",
+      "localThumb": "./thumb/porsche.png",
+      "localOptimized": "./optimized/porsche.png",
+      "localOriginal": "./original/porsche.png"
+    }
+  },
+  {
+    "name": "Tesla",
+    "slug": "tesla",
+    "image": {
+      "source": "https://www.carlogos.org/car-logos/tesla-logo-2007-full-640.png",
+      "thumb": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/tesla.png",
+      "optimized": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/tesla.png",
+      "original": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/original/tesla.png",
+      "localThumb": "./thumb/tesla.png",
+      "localOptimized": "./optimized/tesla.png",
+      "localOriginal": "./original/tesla.png"
+    }
+  },
+  {
+    "name": "Volkswagen",
+    "slug": "volkswagen",
+    "image": {
+      "source": "https://www.carlogos.org/logo/Volkswagen-logo-2019-1500x1500.png",
+      "thumb": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/volkswagen.png",
+      "optimized": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/volkswagen.png",
+      "original": "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/original/volkswagen.png",
+      "localThumb": "./thumb/volkswagen.png",
+      "localOptimized": "./optimized/volkswagen.png",
+      "localOriginal": "./original/volkswagen.png"
+    }
+  }
+]

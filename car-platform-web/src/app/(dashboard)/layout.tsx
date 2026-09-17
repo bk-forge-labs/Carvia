@@ -1,4 +1,4 @@
-import AppHeader from '@/components/layout/AppHeader';
+import DashboardHeader from '@/components/layout/DashboardHeader';
 
 export default function DashboardLayout({
   children,
@@ -7,7 +7,7 @@ export default function DashboardLayout({
 }) {
   return (
     <>
-      <AppHeader />
+      <DashboardHeader />
       {children}
     </>
   );

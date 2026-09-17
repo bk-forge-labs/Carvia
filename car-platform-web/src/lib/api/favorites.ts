@@ -9,6 +9,10 @@ export type ToggleFavoriteResponse = {
   message: string;
 };
 
+export async function setFavoriteBrowser(carId: string, saved: boolean) {
+  return browserApi<ToggleFavoriteResponse>(`/favorites/${encodeURIComponent(carId)}`, { method: saved ? 'PUT' : 'DELETE' });
+}
+
 export type MyFavoritesResponse = {
   success: boolean;
   data: Car[];

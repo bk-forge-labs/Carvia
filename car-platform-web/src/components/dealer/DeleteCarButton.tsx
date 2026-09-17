@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import styles from './DealerWorkspace.module.css';
 import { useRouter } from 'next/navigation';
 
 import { deleteDealerCarBrowser } from '@/lib/api/dealerCars.browser';
@@ -13,9 +14,12 @@ export default function DeleteCarButton({ carId }: Props) {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const lock = useRef(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   async function handleDelete(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
+    if (lock.current) return;
 
     const confirmed = window.confirm(
       'Are you sure you want to delete this Car?',
@@ -26,26 +30,29 @@ export default function DeleteCarButton({ carId }: Props) {
     }
 
     try {
+      lock.current = true;
       setLoading(true);
+      setErrorMessage('');
 
       await deleteDealerCarBrowser(carId);
 
       router.refresh();
     } catch (error) {
-      console.error('Failed to delete car', error);
+      setErrorMessage(error instanceof Error ? error.message : 'This vehicle could not be deleted.');
     } finally {
+      lock.current = false;
       setLoading(false);
     }
   }
 
   return (
-    <button
+    <div> <button
       type='button'
       onClick={handleDelete}
       disabled={loading}
-      className='w-full rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disable:opacity-60'
+      className={styles.danger}
     >
-      {loading ? 'Deleting...' : 'Delete'}
-    </button>
+      {loading ? 'Deleting…' : 'Delete'}
+    </button>{errorMessage && <p role='alert' className={styles.error}>{errorMessage}</p>}</div>
   );
 }

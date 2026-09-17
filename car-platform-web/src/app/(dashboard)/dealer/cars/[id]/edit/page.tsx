@@ -1,27 +1,11 @@
+import Link from 'next/link';
 import DealerCarEditForm from '@/components/dealer/DealerCarEditForm';
-
-import { getDealerCarByIdServer } from '@/lib/api/dealerCars.server';
-
-type Props = {
-  params: Promise<{ id: string }>;
-};
-
-export default async function DealerEditCarPage({ params }: Props) {
-  const { id } = await params;
-
-  const car = await getDealerCarByIdServer(id);
-
-  return (
-    <main className='mx-auto max-w-3xl space-y-6 p-6'>
-      <header className='space-y-2'>
-        <h1 className='text-3xl font-bold text-zinc-950'>Edit Car</h1>
-
-        <p className='text-sm text-zinc-600'>
-          Update your vehicle information.
-        </p>
-      </header>
-
-      <DealerCarEditForm car={car} />
-    </main>
-  );
+import {getDealerCarByIdServer} from '@/lib/api/dealerCars.server';
+import styles from '@/components/dealer/DealerWorkspace.module.css';
+export default async function DealerEditCarPage({params}:{params:Promise<{id:string}>}){
+ const {id}=await params;const car=await getDealerCarByIdServer(id);
+ return <main className={styles.page}><div className={styles.inner}>
+ <Link className={styles.back} href={`/dealer/cars/${id}`}>← Back to vehicle</Link>
+ <header className={styles.heading}><div><p className={styles.eyebrow}>YOUR INVENTORY / EDIT DETAILS</p><h1>Refine your listing.</h1><p className={styles.intro}>{car.title} — keep buyers informed with accurate details.</p></div></header>
+ <DealerCarEditForm car={car}/></div></main>;
 }

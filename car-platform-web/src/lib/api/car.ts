@@ -6,6 +6,7 @@ import { Car } from '@/types/car';
 export type CarsSearchParams = {
   page?: number;
   brand?: string;
+  bodyStyle?: string;
   minPrice?: string;
   maxPrice?: string;
   minYear?: string;
@@ -15,7 +16,7 @@ export type CarsSearchParams = {
 
 export type CarsListResponse = {
   success: boolean;
-  data: [];
+  data: Car[];
   pagination: {
     page: number;
     limit: number;
@@ -50,6 +51,8 @@ function buildCarsQuery(params: CarsSearchParams = {}) {
   if (params.brand) {
     search.set('brand', params.brand);
   }
+
+  if (params.bodyStyle) search.set('bodyStyle', params.bodyStyle);
 
   if (params.minPrice) {
     search.set('minPrice', params.minPrice);
@@ -87,7 +90,7 @@ export async function getCarsServer(params: CarsSearchParams = {}) {
 
 export async function getCarsBrowser(params: CarsSearchParams = {}) {
   const path = buildCarsQuery(params);
-  return browserApi<CarDetailsResponse>(path);
+  return browserApi<CarsListResponse>(path);
 }
 
 export async function getCarByIdServer(id: string) {

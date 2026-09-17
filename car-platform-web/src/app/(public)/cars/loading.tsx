@@ -1,0 +1,2 @@
+import styles from './results.module.css';
+export default function LoadingCars() { return <main className={styles.page} aria-busy='true'><div className={styles.inner}><header className={styles.heading}><p className={styles.eyebrow}>The Carvia collection</p><h1>Finding your next chapter.</h1><p role='status'>Loading vehicles…</p></header><div className={styles.empty} style={{minHeight:240}} /></div></main>; }

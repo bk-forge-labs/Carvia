@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import styles from './DealerWorkspace.module.css';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -14,12 +15,17 @@ const API_BASE_URL =
 export default function PublishToggleButton({ carId, isPublished }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const lock = useRef(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   async function handleToggle(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
+    if (lock.current) return;
 
     try {
+      lock.current = true;
       setLoading(true);
+      setErrorMessage('');
 
       const action = isPublished ? 'unpublish' : 'publish';
 
@@ -35,20 +41,21 @@ export default function PublishToggleButton({ carId, isPublished }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Publish toggle failed', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Publication could not be updated.');
     } finally {
+      lock.current = false;
       setLoading(false);
     }
   }
 
   return (
-    <button
+    <div> <button
       type='button'
       onClick={handleToggle}
       disabled={loading}
-      className='w-full rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 disabled:opacity-60'
+      className={styles.secondary}
     >
-      {loading ? 'updating...' : isPublished ? 'Unpublish' : 'Publish'}
-    </button>
+      {loading ? 'Updating…' : isPublished ? 'Unpublish' : 'Publish'}
+    </button>{errorMessage && <p role='alert' className={styles.error}>{errorMessage}</p>}</div>
   );
 }

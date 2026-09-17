@@ -29,7 +29,7 @@ export default function RequireAuth({
   }, [hasHydrated, user, allow, router]);
 
   if (!hasHydrated) return null; //Don't render until hydration is complete
-  if (!user) return null;
+  if (!user || !allow.includes(user.role)) return null;
 
   return <>{children}</>;
 }

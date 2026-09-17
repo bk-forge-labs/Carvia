@@ -1,9 +1,12 @@
 export type Car = {
+  isDemo?: boolean;
+  imageCredit?: {source:string;author:string;license:string;licenseUrl:string};
   _id: string;
   title: string;
   price: number;
   brand?: string;
   model?: string;
+  bodyStyle?: string;
   year?: number;
   mileage: number;
   fuelType: string;
@@ -14,7 +17,7 @@ export type Car = {
   buyer?: string | Buyer;
   admin?: string | Admin;
   owner?: string;
-  isPublished?: false;
+  isPublished?: boolean;
 
   mainImage?: string;
   images?: string[];

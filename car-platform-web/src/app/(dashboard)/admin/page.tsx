@@ -1,7 +1,3 @@
-export default function AdminPage() {
-  return (
-    <main className='p-6'>
-      <h1 className='text-2xl font-semibold'>Admin Dashboard</h1>
-    </main>
-  );
-}
+import Link from 'next/link';
+import styles from '@/components/admin/DealerDirectory.module.css';
+export default function AdminPage(){return <main className={styles.page}><div className={styles.inner}><header className={styles.heading}><p className={styles.eyebrow}>Carvia administration</p><h1>Review with confidence.</h1><p>Manage dealer access and review vehicle records before publication.</p></header><div className={styles.list}><Link className={styles.row} href='/admin/dealers'><div><h2>Dealer reviews</h2><p>Applications, approvals and account status.</p></div><span aria-hidden='true'>↗</span></Link><Link className={styles.row} href='/admin/cars'><div><h2>Inventory review</h2><p>Check held listings, photographs and seller details.</p></div><span aria-hidden='true'>↗</span></Link></div></div></main>;}

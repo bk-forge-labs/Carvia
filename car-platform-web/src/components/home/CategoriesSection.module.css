@@ -1,0 +1,13 @@
+.section { overflow: clip; }
+.reveal {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 800ms cubic-bezier(.22, 1, .36, 1), transform 900ms cubic-bezier(.22, 1, .36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal[data-pending] { opacity: 0; transform: translateY(32px); }
+.reveal:focus-within { opacity: 1; transform: none; transition: none; }
+@media (max-width: 1023px) { .reveal { transition-delay: 0ms; } }
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal[data-pending] { opacity: 1; transform: none; transition: none; }
+}

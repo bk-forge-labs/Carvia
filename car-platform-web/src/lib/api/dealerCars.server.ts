@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5050/api';
+  process.env.API_INTERNAL_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5050/api';
 
 export async function getDealerCarsServer() {
   const cookieStore = await cookies();
@@ -48,4 +48,16 @@ export async function getDealerCarByIdServer(carId: string) {
   }
 
   return car;
+}
+
+export async function getDealerCarReadinessServer(carId: string): Promise<{ready:boolean;issues:string[]}> {
+  try {
+    const cookieHeader = (await cookies()).toString();
+    const res = await fetch(`${API_URL}/dealer/cars/${carId}/readiness`, {headers:{Cookie:cookieHeader},cache:'no-store'});
+    if (!res.ok) throw new Error('Readiness unavailable');
+    const body = await res.json();
+    return body.data;
+  } catch {
+    return {ready:false,issues:['Publication checks are unavailable. Refresh this page to try again.']};
+  }
 }

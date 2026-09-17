@@ -1,20 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
 import { registerBrowser } from '@/lib/api/auth.browser';
 import type { RegisterBrowserPayload } from '@/lib/api/auth.browser';
+import { safeReturnTo } from '@/lib/auth/returnTo';
 import { useAuth } from '@/lib/store/auth';
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const next = safeReturnTo(searchParams.get('next'));
   const setUser = useAuth(s => s.setUser);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<RegisterBrowserPayload['role']>('buyer');
+  const [role, setRole] = useState<RegisterBrowserPayload['role']>(searchParams.get('role') === 'dealer' ? 'dealer' : 'buyer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,7 +47,7 @@ export default function RegisterPage() {
         }
       }
 
-      router.push(role === 'dealer' ? '/dealer/onboarding' : '/cars');
+      router.push(role === 'dealer' ? '/dealer/onboarding' : next || '/buyer/favorites');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to register');
@@ -136,11 +139,15 @@ export default function RegisterPage() {
 
         <p className='mt-6 text-center text-sm text-zinc-600'>
           Already have an account?{' '}
-          <Link href='/login' className='font-medium text-zinc-950 underline'>
+          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className='font-medium text-zinc-950 underline'>
             Log in
           </Link>
         </p>
       </section>
     </main>
   );
+}
+
+export default function RegisterPage() {
+  return <Suspense fallback={<main className='p-8' aria-busy='true'>Loading registration…</main>}><RegisterForm /></Suspense>;
 }

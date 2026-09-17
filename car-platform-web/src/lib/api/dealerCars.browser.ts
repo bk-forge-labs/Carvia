@@ -6,6 +6,7 @@ type UpdateDealerCarInput = {
   price: number;
   brand: string;
   model: string;
+  bodyStyle?: string;
   year: number;
   mileage: number;
   owner: 'Dealer' | 'Private';
@@ -20,6 +21,7 @@ type CreateDealerCarInput = {
   year: number;
   mileage: number;
   model: string;
+  bodyStyle?: string;
   description: string;
   owner: 'Dealer' | 'Private';
   condition: 'Smoker' | 'Non-Smoker';
@@ -139,5 +141,14 @@ export async function createDealerCarBrowser(payload: CreateDealerCarInput) {
     throw new Error(data?.message || 'Failed to create Car');
   }
 
+  return data.data;
+}
+
+export async function reorderCarImagesBrowser(carId: string, images: string[]) {
+  const res = await fetch(`${API_BASE_URL}/dealer/cars/${carId}/images/order`, {
+    method: 'PUT', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({images}),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || 'Failed to save photo order');
   return data.data;
 }
