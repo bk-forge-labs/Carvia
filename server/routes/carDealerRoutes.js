@@ -11,6 +11,8 @@ const {
   uploadMyCarImages,
   deleteMyCarImage,
   setCarMainImage,
+  reorderMyCarImages,
+  getMyCarReadiness,
 } = require('../controllers/carController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -31,6 +33,7 @@ router.use(authorize('dealer'));
 
 // GET /api/dealer/cars/my
 router.get('/my', getMyCars);
+router.get('/:id/readiness', checkCarOwnerShip, getMyCarReadiness);
 
 // POST /api/dealer/cars
 router.post('/', createCar);
@@ -46,6 +49,7 @@ router.put('/:id/main-image', checkCarOwnerShip, setCarMainImage);
 // DELETE /api/dealer/cars/:id/images
 
 router.delete('/:id/images', checkCarOwnerShip, deleteMyCarImage);
+router.put('/:id/images/order', checkCarOwnerShip, reorderMyCarImages);
 
 // PUT /api/dealer/cars/:id
 router.put('/:id', checkCarOwnerShip, updateMyCar);

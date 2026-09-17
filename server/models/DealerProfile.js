@@ -29,6 +29,8 @@ const dealerProfileSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    publicationVersion: { type: Number, default: 0 },
+    reviewHistory: [{ action: String, from: String, to: String, note: String, by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, at: Date }],
     moderation: {
       lastAction: {
         type: String,

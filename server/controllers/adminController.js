@@ -5,190 +5,35 @@ const User = require('../models/User');
 const Car = require('../models/Car');
 const Booking = require('../models/Booking');
 
-exports.approveDealer = async (req, res) => {
+const { createModerationService } = require('../services/moderationService');
+const { publicationIssues } = require('../utils/publicationQuality');
+const moderationService = createModerationService({DealerProfile,Car,transaction:callback => mongoose.connection.transaction(callback)});
+const moderateDealer = action => async (req,res) => {
   try {
-    const dealerId = req.params.id.trim();
-
-    if (!isValidObjectId(dealerId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid dealer profile id',
-      });
-    }
-
-    const dealer = await DealerProfile.findById(dealerId);
-    if (!dealer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Dealer not found',
-      });
-    }
-
-    dealer.status = 'approved';
-    dealer.rejectionReason = '';
-    dealer.moderation = {
-      lastAction: 'approved',
-      by: req.user.id,
-      at: new Date(),
-    };
-
-    await dealer.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Dealer approved successfully',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({success:false,message:'Invalid dealer profile id'});
+    const result = await moderationService.dealer(req.params.id,action,req.body,req.user.id);
+    return res.json({success:true,data:result.dealer,unpublished:result.unpublished});
+  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.message}); }
 };
-
-exports.rejectDealer = async (req, res) => {
+exports.approveDealer=moderateDealer('approve');
+exports.rejectDealer=moderateDealer('reject');
+exports.suspendDealer=moderateDealer('suspend');
+exports.reactivateDealer=moderateDealer('reactivate');
+exports.getCarReview = async (req,res) => {
   try {
-    const { reason } = req.body;
-    const dealerId = req.params.id.trim();
-
-    if (!reason || typeof reason !== 'string' || reason.trim().length < 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rejection reason is required (min 5 characters)',
-      });
-    }
-
-    if (!isValidObjectId(dealerId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid dealer profile id',
-      });
-    }
-
-    const dealer = await DealerProfile.findById(dealerId);
-
-    if (!dealer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Dealer not found',
-      });
-    }
-    dealer.status = 'rejected';
-    dealer.rejectionReason = reason.trim();
-    dealer.moderation = {
-      lastAction: 'rejected',
-      by: req.user.id,
-      at: new Date(),
-    };
-    await dealer.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Dealer rejected successfully',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({success:false,message:'Invalid vehicle id'});
+    const car = await Car.findById(req.params.id).populate('dealer','name email').populate('reviewHistory.by','name').lean();
+    if (!car) return res.status(404).json({success:false,message:'Vehicle not found'});
+    const seller = car.dealer?._id ? await DealerProfile.findOne({user:car.dealer._id}).select('companyName status').lean() : null;
+    return res.json({success:true,data:car,seller,issues:publicationIssues({...car,publicationHold:''})});
+  } catch(error) { return res.status(500).json({success:false,message:error.message}); }
 };
-
-exports.suspendDealer = async (req, res) => {
+exports.releaseCarHold = async (req,res) => {
   try {
-    const dealerId = req.params.id.trim();
-
-    if (!isValidObjectId(dealerId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid dealer profile id',
-      });
-    }
-
-    const dealer = await DealerProfile.findById(dealerId);
-
-    if (!dealer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Dealer not found',
-      });
-    }
-    dealer.status = 'suspended';
-    dealer.moderation = {
-      lastAction: 'approved',
-      by: req.user.id,
-      at: new Date(),
-    };
-    await dealer.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Dealer suspended successfully',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-exports.reactivateDealer = async (req, res) => {
-  try {
-    const dealerId = req.params.id.trim();
-
-    if (!isValidObjectId(dealerId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid dealer profile id',
-      });
-    }
-
-    const to = (req.query.to || 'pending').trim();
-
-    if (!['pending', 'approved'].includes(to)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid "to" value. Allowed: pending, approved',
-      });
-    }
-
-    const updated = await DealerProfile.findByIdAndUpdate(
-      dealerId,
-      {
-        $set: {
-          status: to,
-          rejectionReason: '',
-          moderation: {
-            lastAction: 'reactivated',
-            by: req.user.id,
-            at: new Date(),
-          },
-        },
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    );
-
-    if (!updated) {
-      res.status(404).json({
-        success: false,
-        message: 'Dealer not found',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Dealer reactivated and moved to pending',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({success:false,message:'Invalid vehicle id'});
+    const car = await moderationService.release(req.params.id,req.body,req.user.id);
+    return res.json({success:true,data:car,message:'Hold released. The vehicle remains a draft.'});
+  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.message}); }
 };
 
 exports.getDealerById = async (req, res) => {
@@ -196,7 +41,7 @@ exports.getDealerById = async (req, res) => {
     const dealerId = req.params.id;
 
     if (!isValidObjectId(dealerId)) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Invalid dealer profile id',
       });
@@ -204,10 +49,10 @@ exports.getDealerById = async (req, res) => {
 
     const dealer = await DealerProfile.findById(dealerId)
       .populate('user', 'name email role')
-      .populate('moderation.by', 'name email');
+      .populate('moderation.by', 'name email').populate('reviewHistory.by','name');
 
     if (!dealer) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         message: 'Dealer not found',
       });
@@ -332,6 +177,7 @@ exports.getAllCarsAdmin = async (req, res) => {
 
     const filter = {};
 
+    if (req.query.held === 'true') filter.publicationHold = { $type:'string', $ne:'' };
     if (req.query.isPublished !== undefined) {
       filter.isPublished = req.query.isPublished === 'true';
     }
@@ -339,7 +185,7 @@ exports.getAllCarsAdmin = async (req, res) => {
     const [totalCars, cars] = await Promise.all([
       Car.countDocuments(filter),
       Car.find(filter)
-        .populate('dealer', 'name, email')
+        .populate('dealer', 'name email')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),

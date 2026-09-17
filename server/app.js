@@ -5,7 +5,10 @@ const cors = require('cors');
 // Adding MongoDB connection
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
-const path = require('path');
+const {deploymentConfig} = require('./config/deployment');
+const {uploadDir, ensureUploadDir} = require('./config/storage');
+const {origins} = deploymentConfig();
+ensureUploadDir();
 
 const app = express();
 
@@ -13,15 +16,15 @@ const PORT = process.env.PORT || 5050; // Enabling .env variables
 
 app.use(express.json());
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadDir));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: origins,
     credentials: true,
-  })
+  }),
 );
-connectDB(); // This is important once all been coded we need to add this
+const databaseReady = connectDB();
 // Middleware
 
 // Routes
@@ -48,6 +51,6 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Starting the server
-app.listen(PORT, () => {
+databaseReady.then(() => app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-});
+}));

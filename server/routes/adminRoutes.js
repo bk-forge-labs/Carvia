@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const {
+  getCarReview,
+  releaseCarHold,
   approveDealer,
   rejectDealer,
   suspendDealer,
@@ -24,6 +26,8 @@ router.get('/dealers/:id', protect, authorize('admin'), getDealerById);
 router.get('/stats', protect, authorize('admin'), getAdminStats);
 router.get('/dealers', protect, authorize('admin'), getAllDealersAdmin);
 router.get('/stats/dealers', protect, authorize('admin'), getDealerStats);
+router.get('/cars/:id/review', protect, authorize('admin'), getCarReview);
+router.put('/cars/:id/release-hold', protect, authorize('admin'), releaseCarHold);
 router.get('/cars', protect, authorize('admin'), getAllCarsAdmin);
 router.get('/bookings', protect, authorize('admin'), getAllBookingsAdmin);
 router.put(

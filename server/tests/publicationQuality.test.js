@@ -1,0 +1,11 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { publicationIssues, assertPublishable } = require('../utils/publicationQuality');
+const complete = { title:'Make Model', brand:'Make', model:'Model', year:2024, price:20000, mileage:0, mainImage:'/uploads/photo.jpg', images:['/uploads/photo.jpg'] };
+test('complete record with a readable photograph passes structural checks', () => assert.deepEqual(publicationIssues(complete, () => true), []));
+test('review hold cannot be bypassed by correcting a title', () => assert(publicationIssues({...complete,publicationHold:'Verify photo identity'}, () => true).some(issue => issue.includes('review'))));
+test('test titles and incorrect identity remain drafts', () => { for (const fields of [{title:'TEST Make Model'},{title:'Some name'},{model:''},{brand:''}]) assert(publicationIssues({...complete,...fields}, () => true).length); });
+test('invalid prices, years and mileage cannot publish', () => { for (const fields of [{price:-1},{price:NaN},{year:1800},{year:9999},{mileage:-1}]) assert(publicationIssues({...complete,...fields}, () => true).length); });
+test('missing, unselected, external and traversing images cannot publish', () => { for (const fields of [{images:[]},{mainImage:''},{mainImage:'/uploads/other.jpg'},{images:['https://example.com/photo.jpg']},{images:['/uploads/../photo.jpg']}]) assert(publicationIssues({...complete,...fields}, () => true).length); assert(publicationIssues(complete, () => false).length); });
+test('incomplete drafts remain editable', () => assert.doesNotThrow(() => assertPublishable({isPublished:false})));
+test('published incomplete records are rejected with an actionable client error', () => assert.throws(() => assertPublishable({isPublished:true}), error => error.statusCode === 400 && /make and model/.test(error.message)));

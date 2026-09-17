@@ -14,7 +14,7 @@ exports.toggleFavorites = async (req, res) => {
       });
     }
 
-    const car = await Car.findById(carId);
+    const car = await Car.findOne({ _id: carId, isPublished: true });
     if (!car) {
       return res.status(404).json({
         success: false,
@@ -65,7 +65,7 @@ exports.toggleFavorites = async (req, res) => {
 
 exports.getMyFavorites = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('favorites');
+    const user = await User.findById(req.user.id).populate({ path: 'favorites', match: { isPublished: true }, select: '-publicationHold -publicationReview -reviewHistory -__v' });
 
     if (!user) {
       return res.status(404).json({
@@ -85,4 +85,17 @@ exports.getMyFavorites = async (req, res) => {
       message: error.message,
     });
   }
+};
+
+// Explicit, atomic intent makes retries and stale browser tabs safe.
+exports.setFavorite = async (req, res) => {
+  const { carId } = req.params;
+  if (!/^[a-f0-9]{24}$/i.test(carId)) return res.status(400).json({success:false,message:'Invalid car id'});
+  const saved = req.method === 'PUT';
+  try {
+    if (saved && !await Car.exists({_id:carId,isPublished:true})) return res.status(404).json({success:false,message:'Car not found'});
+    const user = await User.findByIdAndUpdate(req.user.id, saved ? {$addToSet:{favorites:carId}} : {$pull:{favorites:carId}}, {new:true});
+    if (!user) return res.status(404).json({success:false,message:'User not found'});
+    return res.json({success:true,isFavorite:saved,favoritesCount:user.favorites.length,message:saved?'Vehicle saved':'Vehicle removed'});
+  } catch { return res.status(500).json({success:false,message:'Unable to update saved vehicles'}); }
 };
