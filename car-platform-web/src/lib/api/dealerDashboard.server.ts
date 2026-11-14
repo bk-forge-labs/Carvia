@@ -7,6 +7,7 @@ export type DealerDashboardStats = {
   totalCars: number;
   publishedCars: number;
   draftCars: number;
+  latestCars: { _id: string; title: string; brand: string; price: number; year: number; mileage: number }[];
 };
 
 export async function getDealerDashboardStatsServer(): Promise<DealerDashboardStats> {
@@ -19,6 +20,7 @@ export async function getDealerDashboardStatsServer(): Promise<DealerDashboardSt
       Cookie: cookieHeader,
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(12000),
   });
 
   const data = await res.json();
@@ -33,5 +35,6 @@ export async function getDealerDashboardStatsServer(): Promise<DealerDashboardSt
     totalCars: stats.totalCars ?? 0,
     publishedCars: stats.publishedCars ?? 0,
     draftCars: stats.draftCars ?? 0,
+    latestCars: stats.latestCars ?? [],
   };
 }

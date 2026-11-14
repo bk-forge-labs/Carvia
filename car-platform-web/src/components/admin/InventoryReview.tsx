@@ -2,12 +2,17 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api/browser';
-import VehiclePhoto from '@/components/cars/VehiclePhoto';
+import Image from 'next/image';
 import ReviewAction from './ReviewAction';
 import styles from './DealerDirectory.module.css';
 type Vehicle = { _id:string; title:string; brand?:string; model?:string; year?:number; mileage?:number; price?:number; mainImage?:string; images?:string[]; dealer?:{name?:string;email?:string} | null; isPublished:boolean; publicationHold?:string; updatedAt:string; reviewHistory?:{_id:string;action:string;note:string;at:string;by?:{name?:string}|null}[] };
 type Result = {success:boolean;data:Vehicle|Vehicle[];issues?:string[];seller?:{companyName:string;status:string}|null;pagination?:{totalCars:number;totalPages:number}};
 const imageUrl=(src:string)=>src.startsWith('/uploads/')?`${process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5050'}${src}`:src;
+function ReviewPhoto({src,title,label}:{src:string;title:string;label:string}) {
+ const [failed,setFailed]=useState(false);
+ const url=imageUrl(src);
+ return <figure><div>{failed?<p>Photography unavailable</p>:<Image src={url} alt={title} width={720} height={480} unoptimized onError={()=>setFailed(true)}/>}</div><figcaption>{label}{!failed&&/^https?:/.test(url)&&<> · <a href={url} target='_blank' rel='noopener noreferrer'>Open full photograph ↗</a></>}</figcaption></figure>;
+}
 export default function InventoryReview({id}:{id?:string}) {
   const [filter,setFilter]=useState('held');const [page,setPage]=useState(1);const [attempt,setAttempt]=useState(0);const [notice,setNotice]=useState('');
   const path=id?`/admin/cars/${encodeURIComponent(id)}/review`:`/admin/cars?page=${page}${filter==='held'?'&held=true':filter==='published'?'&isPublished=true':filter==='draft'?'&isPublished=false':''}`;
@@ -17,13 +22,13 @@ export default function InventoryReview({id}:{id?:string}) {
   const eligible=car?.publicationHold && !car.isPublished && !result?.issues?.length && result?.seller?.status==='approved';
   return <main className={styles.page}><div className={styles.inner}>
     <nav className={styles.breadcrumb} aria-label='Breadcrumb'><Link href='/admin'>Administration</Link><span>/</span><Link href='/admin/cars'>Inventory review</Link></nav>
-    <header className={styles.heading}><p className={styles.eyebrow}>Carvia administration</p><h1>{id?car?.title || 'Vehicle review':'Inventory review'}</h1><p>Confirm the vehicle, photographs and seller before releasing a publication hold.</p></header>
+    <header className={styles.heading}><p className={styles.eyebrow}>Veltrenne administration</p><h1>{id?car?.title || 'Vehicle review':'Inventory review'}</h1><p>Confirm the vehicle, photographs and seller before releasing a publication hold.</p></header>
     {notice && <p className={styles.confirmation} role='status'>{notice}</p>}
     {!id && <div className={styles.toolbar}><label htmlFor='inventory-status'>Show</label><select id='inventory-status' value={filter} onChange={event=>{setFilter(event.target.value);setPage(1);}}><option value='held'>Review holds</option><option value='draft'>All drafts</option><option value='published'>Published</option><option value='all'>All inventory</option></select>{result?.pagination && <span>{result.pagination.totalCars} vehicles</span>}</div>}
     {!current?<div className={styles.panel} role='status'>Loading inventory…</div>:current.error?<div className={styles.panel} role='alert'><p>{current.error}</p><button onClick={()=>setAttempt(value=>value+1)}>Try again</button></div>:car?<>
       {car.publicationHold && <section className={styles.panel}><h2>Publication hold</h2><p>{car.publicationHold}</p></section>}
       <section className={styles.panel}><h2>Vehicle record</h2><dl className={styles.details}>{[['Make',car.brand],['Model',car.model],['Year',car.year],['Mileage',car.mileage===undefined?'':`${car.mileage.toLocaleString('en-GB')} km`],['Price',car.price===undefined?'':new Intl.NumberFormat('en-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(car.price)],['Seller',result?.seller?.companyName || car.dealer?.name],['Seller status',result?.seller?.status],['Publication',car.isPublished?'Published':'Draft']].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value || 'Not provided'}</dd></div>)}</dl></section>
-      <section className={styles.panel}><h2>Listing photographs</h2>{car.images?.length?<div className={styles.photos}>{car.images.map((src,index)=><figure key={`${src}-${index}`}><div><VehiclePhoto src={imageUrl(src)} title={`${car.title} — photograph ${index+1}`} /></div><figcaption>{src===car.mainImage?'Main photograph':`Photograph ${index+1}`} · <a href={imageUrl(src).startsWith('http://') || imageUrl(src).startsWith('https://') || imageUrl(src).startsWith('/brand/') ? imageUrl(src) : undefined} target='_blank' rel='noopener noreferrer'>Open full photograph ↗</a></figcaption></figure>)}</div>:<p>No photographs uploaded.</p>}</section>
+      <section className={styles.panel}><h2>Listing photographs</h2>{car.images?.length?<div className={styles.photos}>{car.images.map((src,index)=><ReviewPhoto key={`${src}-${index}`} src={src} title={`${car.title} — photograph ${index+1}`} label={src===car.mainImage?'Main photograph':`Photograph ${index+1}`}/>)}</div>:<p>No photographs uploaded.</p>}</section>
       {!!result?.issues?.length && <section className={styles.panel}><h2>Corrections required</h2><ul>{result.issues.map(issue=><li key={issue}>{issue}</li>)}</ul><p>The dealer must correct these details before the hold can be released.</p></section>}
       {car.publicationHold && result?.seller?.status!=='approved' && <p className={styles.error}>The seller must be approved before this vehicle can be released.</p>}
       {eligible?<ReviewAction key={car.updatedAt} updatedAt={car.updatedAt} release actions={[{label:'Release hold',path:`/admin/cars/${car._id}/release-hold`,consequence:'Release this review hold after checking the evidence. The vehicle remains unpublished; the approved dealer can publish it separately.'}]} onDone={message=>{setNotice(message);setAttempt(value=>value+1);}}/>:!car.publicationHold && <section className={styles.panel}><h2>No publication hold</h2><p>{car.isPublished?'This vehicle is published.':'This vehicle remains a draft. The approved dealer can publish it when ready.'}</p></section>}

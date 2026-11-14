@@ -31,7 +31,7 @@ export default function HeroSection() {
             <div className='mt-8 flex flex-col gap-4 sm:flex-row'>
               <Button href='/cars'>Browse Cars</Button>
               <Button href='/register' variant='secondary'>
-                Sell With Carvia
+                Sell With Veltrenne
               </Button>
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function HeroSection() {
 
               <Image
                 src='/hero-car.jpg'
-                alt='Luxury performance car featured by Carvia'
+                alt='Luxury performance car featured by Veltrenne'
                 width={1400}
                 height={900}
                 priority

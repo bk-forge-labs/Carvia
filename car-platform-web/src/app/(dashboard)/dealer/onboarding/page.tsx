@@ -1,9 +1,9 @@
+import {redirect} from 'next/navigation';
+import {getDealerProfileState} from '@/lib/api/dealerProfile.server';
 import DealerOnboardingForm from '@/components/dealer/DealerOnboardingForm';
-
-export default function DealerOnboardingPage() {
-  return (
-    <main className='flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-12'>
-      <DealerOnboardingForm />
-    </main>
-  );
+import styles from '@/components/dealer/DealerWorkspace.module.css';
+export default async function DealerOnboardingPage(){
+ const profile=await getDealerProfileState('/dealer/onboarding');
+ if(profile)redirect(profile.status==='approved'?'/dealer':'/dealer/pending');
+ return <main className={styles.page}><div className={styles.inner}><DealerOnboardingForm/></div></main>;
 }

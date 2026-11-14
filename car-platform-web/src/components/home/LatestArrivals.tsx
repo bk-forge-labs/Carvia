@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/browser';
-import { toggleFavoriteBrowser } from '@/lib/api/favorites';
+import { setFavoriteBrowser } from '@/lib/api/favorites';
 import type { Car } from '@/types/car';
 import styles from './LatestArrivals.module.css';
 
@@ -19,9 +19,9 @@ export default function LatestArrivals({ vehicle, deal, onBrowseCars }: { vehicl
     <div className={styles.inner}><div className={styles.availability}>
       <div><p className={styles.eyebrow}>{vehicle === 'motorcycles' ? 'The motorcycle collection' : 'A different way to drive'}</p>
       <h2 id='latest-arrivals-title'>{deal === 'lease' ? 'Leasing. A chapter to come.' : 'Your next ride is on the horizon.'}</h2>
-      <p>{deal === 'lease' ? 'There are no leasing offers available on Carvia yet.' : 'There are no motorcycles listed on Carvia yet.'} Your search selections are kept while you explore.</p>
+      <p>{deal === 'lease' ? 'There are no leasing offers available on Veltrenne yet.' : 'There are no motorcycles listed on Veltrenne yet.'} Your search selections are kept while you explore.</p>
       <button type='button' onClick={onBrowseCars}>Explore cars for sale <span aria-hidden='true'>↗</span></button></div>
-      <span className={styles.availabilityNote}>Coming to Carvia<br /><span>{deal === 'lease' ? 'Leasing' : 'Motorcycles'}</span></span>
+      <span className={styles.availabilityNote}>Coming to Veltrenne<br /><span>{deal === 'lease' ? 'Leasing' : 'Motorcycles'}</span></span>
     </div></div>
   </section>;
   return <AvailableArrivals />;
@@ -57,7 +57,7 @@ function AvailableArrivals() {
     if (busy.has(car._id)) return;
     setBusy(previous => new Set(previous).add(car._id)); setNotice('');
     try {
-      const result = await toggleFavoriteBrowser(car._id);
+      const result = await setFavoriteBrowser(car._id, !saved.has(car._id));
       if (!result.success) throw new Error('Save failed');
       setSaved(previous => { const next = new Set(previous); if (result.isFavorite) next.add(car._id); else next.delete(car._id); return next; });
       setNotice(`${car.title} ${result.isFavorite ? 'saved to' : 'removed from'} your favourites.`);
@@ -75,8 +75,9 @@ function AvailableArrivals() {
         : <div className={styles.grid}>{cars.map(car => {
           const raw = car.mainImage || car.images?.[0] || '';
           const src = raw.startsWith('/uploads') ? `${process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5050'}${raw}` : raw;
-          const dealer = typeof car.dealer === 'object' ? car.dealer.name : '';
+          const dealer = car.sellerName || 'Dealership';
           return <article className={styles.card} key={car._id}>
+            {car.isDemo && <p className={styles.sample}>Sample vehicle · Not an offer for sale</p>}
             <div className={styles.media}><Link href={`/cars/${encodeURIComponent(car._id)}`} aria-label={`View ${car.title}`}>
               <VehiclePhoto key={src} src={src} title={car.title} />
             </Link><button className={styles.save} type='button' disabled={!favoritesReady || busy.has(car._id)} aria-pressed={saved.has(car._id)} aria-label={`${saved.has(car._id) ? 'Unsave' : 'Save'} ${car.title}`} onClick={() => save(car)}><svg width='19' height='19' viewBox='0 0 24 24' fill={saved.has(car._id) ? 'currentColor' : 'none'} stroke='currentColor' strokeWidth='1.5' aria-hidden='true'><path d='M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z'/></svg></button></div>

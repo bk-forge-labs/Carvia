@@ -18,8 +18,8 @@ export default function CvShowroom({ className }: { className: string }) {
     let disposed = false;
     let cleanup: (() => void) | undefined;
     async function start() {
-      const [THREE, { GLTFLoader }, { RGBELoader }] = await Promise.all([
-        import('three'), import('three/addons/loaders/GLTFLoader.js'), import('three/addons/loaders/RGBELoader.js'),
+      const [THREE, { GLTFLoader }, { HDRLoader }, { SVGLoader }] = await Promise.all([
+        import('three'), import('three/addons/loaders/GLTFLoader.js'), import('three/addons/loaders/HDRLoader.js'), import('three/addons/loaders/SVGLoader.js'),
       ]);
       if (disposed) return;
       const renderer = new THREE.WebGLRenderer({ canvas: canvas!, alpha: true, antialias: true, powerPreference: 'low-power' });
@@ -29,7 +29,7 @@ export default function CvShowroom({ className }: { className: string }) {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.05;
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
       const scene = new THREE.Scene();
       const onContextLost = (event: Event) => { event.preventDefault(); setReady(false); };
       canvas!.addEventListener('webglcontextlost', onContextLost);
@@ -54,9 +54,10 @@ export default function CvShowroom({ className }: { className: string }) {
         resources.forEach(resource => resource.dispose()); renderer.dispose();
       };
       try {
-        const [model, environment] = await Promise.all([
+        const [model, environment, emblem] = await Promise.all([
           new GLTFLoader().loadAsync('/brand/cv/carvia-cv.glb'),
-          new RGBELoader().loadAsync('/brand/cv/studio.hdr'),
+          new HDRLoader().loadAsync('/brand/cv/studio.hdr'),
+          new SVGLoader().loadAsync('/logo/veltrenne/emblem-gold.svg'),
         ]);
         if (disposed) {
           environment.dispose();
@@ -75,12 +76,33 @@ export default function CvShowroom({ className }: { className: string }) {
               (Array.isArray(object.material) ? object.material : [object.material]).forEach(m => m.dispose());
               object.material = new THREE.MeshStandardMaterial({ color: '#181917', metalness: .15, roughness: .65 });
             }
-            if (object.name.startsWith('CV')) {
-              (Array.isArray(object.material) ? object.material : [object.material]).forEach(m => m.dispose());
-              object.material = new THREE.MeshStandardMaterial({ color: '#bda47e', metalness: .92, roughness: .3 });
-            }
+
           }
         });
+        // Keep the approved platform; replace only the old monogram geometry.
+        const oldLetters: InstanceType<typeof THREE.Mesh>[] = [];
+        model.scene.traverse(object => { if (object instanceof THREE.Mesh && object.name.startsWith('CV')) oldLetters.push(object); });
+        oldLetters.forEach(object => {
+          object.removeFromParent(); object.geometry.dispose();
+          (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => material.dispose());
+        });
+        const mark = new THREE.Group();
+        const gold = new THREE.MeshStandardMaterial({ color: '#bda47e', metalness: .92, roughness: .3 });
+        emblem.paths.forEach(path => path.toShapes().forEach(shape => {
+          const geometry = new THREE.ExtrudeGeometry(shape, { depth: 30, bevelEnabled: true, bevelThickness: 2, bevelSize: 1.6, bevelSegments: 3, curveSegments: 24 });
+          geometry.translate(-250, -143, -15);
+          geometry.scale(.0072, -.0072, .0072);
+          // Reflection of SVG's downwards Y axis reverses the winding order.
+          const positions = geometry.getAttribute('position');
+          for (let i = 0; i < positions.count; i += 3) {
+            const x = positions.getX(i + 1), y = positions.getY(i + 1), z = positions.getZ(i + 1);
+            positions.setXYZ(i + 1, positions.getX(i + 2), positions.getY(i + 2), positions.getZ(i + 2));
+            positions.setXYZ(i + 2, x, y, z);
+          }
+          geometry.computeVertexNormals();
+          const mesh = new THREE.Mesh(geometry, gold); mesh.castShadow = true; mesh.receiveShadow = true; mark.add(mesh);
+        }));
+        mark.position.y = 1.23; mark.rotation.y = .55; sculpture.add(mark);
         const key = new THREE.DirectionalLight('#fff1dd', 1.5); key.position.set(6, 6, 10); key.castShadow = true;
         key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4; key.shadow.normalBias = .025;
         scene.add(key);
@@ -105,7 +127,7 @@ export default function CvShowroom({ className }: { className: string }) {
   }, []);
   return <>
     <Image src='/brand/cv/showroom.webp' alt='' fill priority sizes='100vw' className={className} />
-    <Image src='/brand/cv/cv-poster.webp' alt='' fill priority sizes='100vw' className={className} style={{ opacity: ready ? 0 : 1 }} />
+    <Image src='/logo/veltrenne/emblem-gold.svg' alt='' width={500} height={286} priority style={{ position: 'absolute', left: '53%', top: '28%', width: '30%', height: 'auto', opacity: ready ? 0 : 1 }} />
     <canvas ref={canvasRef} className={className} aria-hidden='true' style={{ opacity: ready ? 1 : 0, transition: 'opacity 500ms ease' }} />
     {ready && <button type='button' className={styles.control} aria-label={paused ? 'Play logo motion' : 'Pause logo motion'} onClick={() => { pausedRef.current = !pausedRef.current; setPaused(pausedRef.current); }}>{paused ? '▶ Play motion' : 'Ⅱ Pause motion'}</button>}
   </>;

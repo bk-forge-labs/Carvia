@@ -13,7 +13,7 @@ export default function FeaturedCarsSection() {
           <div className='flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>
             <SectionHeading
               title='Featured Cars'
-              subtitle='Explore curated selection of premium vehicles available now on Carvia.'
+              subtitle='Explore curated selection of premium vehicles available now on Veltrenne.'
             />
 
             <Link

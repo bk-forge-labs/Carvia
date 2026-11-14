@@ -68,7 +68,7 @@ export default function RecentlyViewed() {
         const safeImage = /^https?:\/\//.test(image) || (image.startsWith('/') && !image.startsWith('//'));
         return <Link className={styles.recentCard} href={`/cars/${encodeURIComponent(item.id)}`} key={item.id}>
           <div className={styles.recentImage}>
-            {safeImage ? <Image src={image} alt='' width={640} height={426} unoptimized loading='lazy' onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span>Carvia collection</span>}
+            {safeImage ? <Image src={image} alt='' width={640} height={426} unoptimized loading='lazy' onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span>Veltrenne collection</span>}
           </div>
           <div className={styles.recentCopy}><h3>{item.title}</h3><span>View vehicle <span aria-hidden='true'>↗</span></span></div>
         </Link>;

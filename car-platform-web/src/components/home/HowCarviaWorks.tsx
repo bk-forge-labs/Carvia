@@ -11,7 +11,7 @@ export default function HowCarviaWorks() {
   return <section id='our-approach' aria-labelledby='how-carvia-title' className={styles.section}>
     <div className={styles.inner}>
       <div className={styles.heading}>
-        <div><p className={styles.eyebrow}>How Carvia works</p><h2 id='how-carvia-title'>Your next chapter.<br /><span>Three simple steps.</span></h2></div>
+        <div><p className={styles.eyebrow}>How Veltrenne works</p><h2 id='how-carvia-title'>Your next chapter.<br /><span>Three simple steps.</span></h2></div>
         <p className={styles.intro}>From the first look to the first conversation, a clear path to your next vehicle.</p>
       </div>
       <ol className={styles.steps}>

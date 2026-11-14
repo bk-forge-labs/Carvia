@@ -1,6 +1,5 @@
 'use client';
 
-import { init } from 'next/dist/compiled/webpack/webpack';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
@@ -64,7 +63,7 @@ export function CarsFilters({ initial, brands }: Props) {
     if (pMin) params.set('minPrice', pMin);
     else params.delete('minPrice');
 
-    if (pMax) params.set('maxPrice', maxPrice);
+    if (pMax) params.set('maxPrice', pMax);
     else params.delete('maxPrice');
 
     if (yMin) params.set('minYear', yMin);
@@ -74,7 +73,7 @@ export function CarsFilters({ initial, brands }: Props) {
     else params.delete('maxYear');
     const q = params.toString();
     return q ? `?${q}` : '';
-  }, [sp, brand, minPrice, maxPrice, minYear, maxYear]);
+  }, [sp, brand, minPrice, maxPrice, minYear, maxYear, sort]);
 
   function apply() {
     router.push(
@@ -83,6 +82,7 @@ export function CarsFilters({ initial, brands }: Props) {
   }
 
   function clear() {
+    setSort('newest');
     setBrand('');
     setMaxPrice('');
     setMinPrice('');

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import styles from './PublicHeader.module.css';
+import AccountMenu from '@/components/auth/AccountMenu';
 
 const links = [
   { href: '/cars', label: 'Explore cars' },
@@ -63,12 +64,12 @@ export default function PublicHeader() {
   return (
     <header ref={headerRef} className={styles.header} data-home={pathname === '/'} data-scrolled={scrolled}>
       <div className={styles.inner}>
-        <Link href='/' aria-label='Carvia home' className={styles.logo} onClick={() => setOpenPath(null)}>
+        <Link href='/' aria-label='Veltrenne home' className={styles.logo} onClick={() => setOpenPath(null)}>
           <Image
-            src='/logo/carvia-lockup-champagne.png'
+            src='/logo/veltrenne/horizontal-gold.svg'
             alt=''
-            width={2631}
-            height={522}
+            width={628}
+            height={75}
             sizes='(min-width: 1000px) 220px, 186px'
             priority
           />
@@ -86,6 +87,7 @@ export default function PublicHeader() {
           <Link href='/register' className={styles.join}>Sell your car</Link>
         </div>
 
+        <div className={styles.account}><AccountMenu/></div>
         <button ref={toggleRef} type='button' className={styles.toggle} aria-expanded={isOpen} aria-controls='carvia-mobile-navigation' aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'} onClick={() => setOpenPath(isOpen ? null : pathname)}>
           <span>{isOpen ? 'Close' : 'Menu'}</span>
           <svg className={styles.menuIcon} width='22' height='22' viewBox='0 0 24 24' fill='none' aria-hidden='true'><path d={isOpen ? 'M6 6 18 18M6 18 18 6' : 'M3 8h18M3 16h18'} stroke='currentColor' strokeWidth='1.2' /></svg>
@@ -96,14 +98,14 @@ export default function PublicHeader() {
         if (event.relatedTarget && !headerRef.current?.contains(event.relatedTarget as Node)) setOpenPath(null);
       }}>
         <div className={styles.mobileInner}>
-          <p className={styles.eyebrow}>Discover Carvia</p>
+          <p className={styles.eyebrow}>Discover Veltrenne</p>
           {links.map(link => (
             <Link key={link.href} href={link.href} className={styles.mobileLink} aria-current={active(link.href) ? 'page' : undefined} onClick={() => setOpenPath(null)}>
               {link.label}<Arrow />
             </Link>
           ))}
           <div className={styles.mobileActions}>
-            <Link href='/login' className={styles.signIn} onClick={() => setOpenPath(null)}>Sign in</Link>
+
             <Link href='/register' className={styles.join} onClick={() => setOpenPath(null)}>Sell your car <Arrow /></Link>
           </div>
         </div>

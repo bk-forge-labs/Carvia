@@ -1,5 +1,6 @@
 export type Car = {
   isDemo?: boolean;
+  sellerName?: string;
   imageCredit?: {source:string;author:string;license:string;licenseUrl:string};
   _id: string;
   title: string;
@@ -10,6 +11,9 @@ export type Car = {
   year?: number;
   mileage: number;
   fuelType: string;
+  exteriorColor?: string;
+  seats?: number | null;
+  doors?: number | null;
   transmission?: string;
   location?: string;
   condition?: string;

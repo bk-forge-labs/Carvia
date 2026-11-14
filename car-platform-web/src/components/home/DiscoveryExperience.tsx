@@ -1,13 +1,16 @@
 'use client';
+import VehicleFilters from '@/components/cars/VehicleFilters';
 
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import Image from 'next/image';
+import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import RecentlyViewed from './RecentlyViewed';
 import LatestArrivals from './LatestArrivals';
 import CvShowroom from './CvShowroom';
 import TurntableScene from './TurntableScene';
 import { api } from '@/lib/api/browser';
+import { endpoints } from '@/lib/api/endpoints';
 import styles from './DiscoveryExperience.module.css';
 
 type Vehicle = 'cars' | 'motorcycles';
@@ -24,6 +27,9 @@ const euro = (value: string) => `€${Number(value).toLocaleString('en-GB')}`;
 function Arrow() { return <span aria-hidden='true'>↗</span>; }
 
 export default function DiscoveryExperience() {
+  const router=useRouter();
+  const [carMakes,setCarMakes]=useState<string[]>([]);
+  useEffect(()=>{const controller=new AbortController();api<{data:string[]}>(endpoints.cars.brands,{signal:controller.signal}).then(r=>setCarMakes(r.data)).catch(()=>{});return()=>controller.abort();},[]);
   const [showBrand, setShowBrand] = useState(true);
   const [vehicle, setVehicle] = useState<Vehicle>('cars');
   const [deal, setDeal] = useState<Deal>('buy');
@@ -73,7 +79,7 @@ export default function DiscoveryExperience() {
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (live) window.location.assign(`/cars${queryString ? `?${queryString}` : ''}`);
+    if (live) router.push(`/cars${queryString ? `?${queryString}` : ''}`);
     else dialogRef.current?.showModal();
   }
 
@@ -85,26 +91,26 @@ export default function DiscoveryExperience() {
         </div>
         <div className={styles.shade} />
         <div className={styles.copy} key={showBrand ? 'brand' : vehicle}>
-          <p className={styles.eyebrow}>The Carvia Collection · {showBrand ? 'A new perspective' : vehicle === 'cars' ? 'Four wheels' : 'Two wheels'}</p>
-          <h1 id='discovery-title'>{showBrand ? 'Your next chapter.' : vehicle === 'cars' ? 'Exceptional cars.' : 'Pure freedom.'}<br />{showBrand ? 'Starts with Carvia.' : vehicle === 'cars' ? 'Your next chapter.' : 'Your next ride.'}</h1>
+          <p className={styles.eyebrow}>The Veltrenne Collection · {showBrand ? 'A new perspective' : vehicle === 'cars' ? 'Four wheels' : 'Two wheels'}</p>
+          <h1 id='discovery-title'>{showBrand ? 'Your next chapter.' : vehicle === 'cars' ? 'Exceptional cars.' : 'Pure freedom.'}<br />{showBrand ? 'Starts with Veltrenne.' : vehicle === 'cars' ? 'Your next chapter.' : 'Your next ride.'}</h1>
           <p className={styles.description}>{vehicle === 'cars' ? 'Discover remarkable vehicles. Find the one that moves you.' : 'Extraordinary motorcycles. For the roads that call you.'}</p>
           <a href='#discovery-search' className={styles.heroLink}>Find your {showBrand ? 'next vehicle' : vehicle === 'cars' ? 'next car' : 'next motorcycle'} <Arrow /></a>
         </div>
-        <span className={styles.sceneCaption}>{showBrand ? 'CV / The Carvia Collection' : vehicle === 'cars' ? '01 / The drive' : '02 / The ride'}</span>
+        <span className={styles.sceneCaption}>{showBrand ? 'VE / The Veltrenne Collection' : vehicle === 'cars' ? '01 / The drive' : '02 / The ride'}</span>
       </section>
 
       <div className={styles.discovery}>
         <form id='discovery-search' onSubmit={submit} className={styles.search} aria-label='Discover vehicles'>
           <div className={styles.searchTop}>
             <div className={styles.vehicleSwitch} role='group' aria-label='Vehicle type'>
-              {(['cars', 'motorcycles'] as const).map(type => <button key={type} type='button' aria-pressed={!showBrand && vehicle === type} onClick={() => { setVehicle(type); setShowBrand(false); }}>{type === 'cars' ? 'Cars' : 'Motorcycles'}</button>)}
+              {(['cars', 'motorcycles'] as const).map(type => <button key={type} type='button' aria-pressed={!showBrand && vehicle === type} onClick={() => { setVehicle(type); setShowBrand(false); }}>{type === 'cars' ? 'Cars' : 'Motorcycles · Coming soon'}</button>)}
             </div>
             <div className={styles.dealSwitch} role='group' aria-label='Purchase method'>
-              {(['buy', 'lease'] as const).map(type => <button key={type} type='button' aria-pressed={deal === type} onClick={() => setDeal(type)}>{type === 'buy' ? 'Buy' : 'Lease'}</button>)}
+              {(['buy', 'lease'] as const).map(type => <button key={type} type='button' aria-pressed={deal === type} onClick={() => setDeal(type)}>{type === 'buy' ? 'Buy' : 'Lease · Coming soon'}</button>)}
             </div>
           </div>
           <div className={styles.fields}>
-            <label><span>Make</span><select aria-label='Make' value={filters.brand} onChange={e => update('brand', e.target.value)}><option value=''>All makes</option>{makes[vehicle].map(make => <option key={make}>{make}</option>)}</select></label>
+            <label><span>Make</span><select aria-label='Make' value={filters.brand} onChange={e => update('brand', e.target.value)}><option value=''>All makes</option>{(vehicle==='cars'?carMakes:makes.motorcycles).map(make => <option key={make}>{make}</option>)}</select></label>
             <label><span>{vehicle === 'cars' ? 'Body style' : 'Riding style'}</span><select aria-label={vehicle === 'cars' ? 'Body style' : 'Riding style'} value={filters.style} onChange={e => update('style', e.target.value)}><option value=''>All styles</option>{categories[vehicle].map(category => <option key={category.value} value={category.value}>{category.label}</option>)}{vehicle === 'cars' && <><option value='Coupe'>Coupes</option><option value='Hatchback'>Hatchbacks</option><option value='Van'>Vans</option></>}</select></label>
             <label><span>{deal === 'lease' ? 'Monthly budget' : 'Purchase budget'}</span><select aria-label={deal === 'lease' ? 'Monthly budget' : 'Purchase budget'} value={filters.budget} onChange={e => update('budget', e.target.value)}><option value=''>{deal === 'lease' ? 'Any monthly payment' : 'Any price'}</option>{budgets[deal === 'lease' ? 'lease' : vehicle].map(value => <option key={value} value={value}>Up to {euro(value)}{deal === 'lease' ? ' / mo' : ''}</option>)}</select></label>
             <button className={styles.find} type='submit'><span aria-live='polite'>{pending ? 'Updating…' : !live ? 'Review your search' : total !== null ? `Explore ${total.toLocaleString('en-GB')} vehicles` : 'Explore cars'}</span><Arrow /></button>
@@ -116,6 +122,7 @@ export default function DiscoveryExperience() {
           </div>}
           <div className={styles.searchFoot}><span>{live ? 'Your next chapter starts here.' : 'Live offers not yet available'}</span><button type='button' onClick={() => setSaved(previous => ({ ...previous, [key]: empty() }))}>Reset filters</button></div>
         </form>
+        {live&&<VehicleFilters key={queryString} compact initial={{brand:filters.brand,bodyStyle:filters.style,maxPrice:filters.budget}} brands={carMakes}/>}
 
         <section ref={categoryRef} className={`${styles.categories} ${revealed ? styles.revealed : ''}`} aria-labelledby='body-style-title'>
           {showBrand ? <RecentlyViewed /> : <>

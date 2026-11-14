@@ -7,6 +7,7 @@ export type CarsSearchParams = {
   page?: number;
   brand?: string;
   bodyStyle?: string;
+  model?: string; transmission?: string; fuelType?: string; exteriorColor?: string; seats?: string; doors?: string; minMileage?: string; maxMileage?: string;
   minPrice?: string;
   maxPrice?: string;
   minYear?: string;
@@ -74,6 +75,7 @@ function buildCarsQuery(params: CarsSearchParams = {}) {
     search.set('sort', params.sort);
   }
 
+  for(const key of ['model','transmission','fuelType','exteriorColor','seats','doors','minMileage','maxMileage'] as const)if(params[key])search.set(key,params[key]);
   const query = search.toString();
 
   if (!query) {

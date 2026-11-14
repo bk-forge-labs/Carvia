@@ -55,7 +55,7 @@ export async function api<T>(
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000),
     credentials: 'include',
   });
 
@@ -65,10 +65,10 @@ export async function api<T>(
     : await res.text();
 
   if (!res.ok) {
-    const msg =
-      (data && (data as any).message) ||
-      (data && (data as any).error) ||
-      `Request failed (${res.status})`;
+    const errorData = data && typeof data === 'object' ? data as Record<string, unknown> : {};
+    const msg = typeof errorData.message === 'string' ? errorData.message
+      : typeof errorData.error === 'string' ? errorData.error
+      : `Request failed (${res.status})`;
     throw new ApiError(msg, res.status, data);
   }
 

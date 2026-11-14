@@ -6,7 +6,7 @@ export default function DealerInvitation() {
   return <section id='for-dealers' aria-labelledby='dealer-invitation-title' className={styles.section}>
     <div className={styles.panel}>
       <div className={styles.copy}>
-        <p className={styles.eyebrow}>Carvia for dealers</p>
+        <p className={styles.eyebrow}>Veltrenne for dealers</p>
         <h2 id='dealer-invitation-title'>Your inventory.<br /><span>A better first impression.</span></h2>
         <p className={styles.intro}>Give your vehicles a considered showcase, with clear details and a direct path for buyers to reach you.</p>
         <ul className={styles.benefits}><li>Present your vehicles with photos and specifications.</li><li>Manage your listings from your dealer workspace.</li><li>Let buyers contact your dealership directly.</li></ul>
@@ -15,7 +15,7 @@ export default function DealerInvitation() {
       </div>
       <div className={styles.visual}>
         <Image src='/brand/carvia-turntable-bk.webp' alt='' fill sizes='(max-width: 760px) 160vw, 100vw' className={styles.image} />
-        <div className={styles.caption}><span>The Carvia showroom</span><p>A space for your<br />next opportunity.</p></div>
+        <div className={styles.caption}><span>The Veltrenne showroom</span><p>A space for your<br />next opportunity.</p></div>
       </div>
     </div>
   </section>;

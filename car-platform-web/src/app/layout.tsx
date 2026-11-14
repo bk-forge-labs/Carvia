@@ -4,8 +4,8 @@ import Providers from './providers';
 import AuthHydrator from '../components/auth/AuthHydrator';
 
 export const metadata: Metadata = {
-  title: 'Car Platform',
-  description: 'Marketplace platform',
+  title: 'Veltrenne | Find your next drive',
+  description: 'Explore vehicles, save your favourites and connect with dealers on Veltrenne.',
 };
 
 export default function RootLayout({

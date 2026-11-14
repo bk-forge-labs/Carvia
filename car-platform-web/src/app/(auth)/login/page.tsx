@@ -27,7 +27,7 @@ function LoginForm() {
     finally { lock.current = false; setBusy(false); }
   }
   return <main className={styles.auth}><section className={styles.authPanel}>
-    <p className={styles.eyebrow}>Your Carvia</p><h1>Welcome back.</h1>
+    <p className={styles.eyebrow}>Your Veltrenne</p><h1>Welcome back.</h1>
     <p className={styles.intro}>{next ? 'Sign in to continue where you left off.' : 'Keep the vehicles that catch your eye, all in one place.'}</p>
     <form onSubmit={submit} className={styles.form}>
       <label>Email address<input name='email' type='email' autoComplete='email' required /></label>
@@ -35,8 +35,9 @@ function LoginForm() {
       {error && <p role='alert' className={styles.error}>{error}</p>}
       <button className={styles.primary} disabled={busy || !hasHydrated || !!user}>{busy ? 'Signing in…' : !hasHydrated ? 'Checking your session…' : 'Sign in'}</button>
     </form>
-    <p className={styles.intro}>New to Carvia? <Link href={`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`}>Create an account</Link></p>
-    <Link className={styles.link} href={next || '/cars'}>← Continue browsing</Link>
+    <Link className={styles.link} href='/forgot-password'>Forgot your password?</Link>
+    <p className={styles.intro}>New to Veltrenne? <Link href={`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`}>Create an account</Link></p>
+    <Link className={styles.link} href={next && /^\/cars(?:[/?#]|$)/.test(next) ? next : '/cars'}>← Continue browsing</Link>
   </section></main>;
 }
 export default function LoginPage() { return <Suspense fallback={<main className={styles.auth} aria-busy='true'>Loading sign-in…</main>}><LoginForm /></Suspense>; }

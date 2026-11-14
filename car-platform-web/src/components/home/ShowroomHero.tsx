@@ -17,7 +17,7 @@ export default function ShowroomHero() {
       </div>
       <div className={styles.shade} />
       <div className={styles.copy}>
-        <p className={styles.eyebrow}>The Carvia Collection</p>
+        <p className={styles.eyebrow}>The Veltrenne Collection</p>
         <h1 id='showroom-title'>Exceptional cars.<br />Your next chapter.</h1>
         <p className={styles.description}>Discover remarkable vehicles. Find the one that moves you.</p>
         <div className={styles.ctas}>

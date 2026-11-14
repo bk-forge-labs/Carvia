@@ -7,6 +7,12 @@ type UpdateDealerCarInput = {
   brand: string;
   model: string;
   bodyStyle?: string;
+  fuelType?: string;
+  exteriorColor?: string;
+  seats?: number | null;
+  doors?: number | null;
+  transmission?: string;
+  location?: string;
   year: number;
   mileage: number;
   owner: 'Dealer' | 'Private';
@@ -22,6 +28,12 @@ type CreateDealerCarInput = {
   mileage: number;
   model: string;
   bodyStyle?: string;
+  fuelType?: string;
+  exteriorColor?: string;
+  seats?: number | null;
+  doors?: number | null;
+  transmission?: string;
+  location?: string;
   description: string;
   owner: 'Dealer' | 'Private';
   condition: 'Smoker' | 'Non-Smoker';

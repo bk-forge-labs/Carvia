@@ -1,0 +1,12 @@
+import type {Metadata} from 'next';
+import InformationLayout from '@/components/information/InformationLayout';
+import s from '@/components/information/Information.module.css';
+export const metadata:Metadata={title:"Terms of use | Veltrenne",robots:{index:false,follow:true}};
+export default function Page(){return <InformationLayout active="/terms" eyebrow="Terms of use" title="A clear basis for every journey." intro="Draft platform terms for review before public launch." draft>{/* Draft content remains noindex until business details and policies are confirmed. */}
+<section className={s.section}><h2>Status of these terms</h2><p>These draft terms are not yet effective. The legal operator, launch market, applicable commercial terms and effective date must be confirmed before publication as an agreement.</p></section>
+<section className={s.section}><h2>Using the marketplace</h2><p>Veltrenne currently supports discovering vehicles, saving listings and contacting sellers. Sending an enquiry does not reserve a vehicle, process a payment or conclude a vehicle purchase.</p></section>
+<section className={s.section}><h2>Accounts and listings</h2><p>Proposed platform rules: keep account and business details accurate, protect sign-in credentials and publish only vehicles and photographs you are authorised to offer and use. Do not submit misleading listings or impersonate another person or business.</p></section>
+<section className={s.section}><h2>Dealer review and moderation</h2><p>The current product supports dealer approval and listing moderation. Changes to approved business details can require a new review. Final moderation rules, notice and complaint procedures must be confirmed before these terms become effective.</p></section>
+<section className={s.section}><h2>Purchases and sample content</h2><p>Vehicle availability, condition and any purchase arrangements should be confirmed with the seller. Clearly labelled sample listings are illustrations and are not offers for sale. Final terms must define the operator’s and sellers’ respective responsibilities without limiting mandatory rights.</p></section>
+<section className={s.section}><h2>Commercial and legal provisions to confirm</h2><p>Dealer fees, service scope, termination, complaints, liability and applicable law remain to be agreed and reviewed. This draft does not assert a subscription, refund policy, governing jurisdiction or waiver of consumer rights.</p></section>
+<p className={s.meta}>Prepared for owner review · 5 October 2026</p></InformationLayout>}

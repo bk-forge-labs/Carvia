@@ -1,0 +1,12 @@
+'use client';
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
+import {useTransition} from 'react';
+import type {DealerProfileState} from '@/lib/api/dealerProfile.server';
+import shared from './DealerWorkspace.module.css';
+import styles from './DealerApplication.module.css';
+const copy={pending:{label:'Under review',title:'Your next chapter is under review.',body:'Your application has been submitted. We will review your dealership before enabling new listings.'},rejected:{label:'Not approved',title:'Your application needs attention.',body:'Your dealership has not been approved. Review the reason below. An administrator must reopen the application before it can be reviewed again.'},suspended:{label:'Publishing paused',title:'Your dealership is currently suspended.',body:'Publishing is unavailable and any previously public listings have been taken offline. Your vehicle details remain saved. An administrator must reopen your application before approval can be considered again.'},approved:{label:'Approved',title:'Your workspace is ready.',body:'Your dealership has been approved.'}};
+export default function DealerApplicationStatus({profile}:{profile:DealerProfileState}){
+ const router=useRouter(),[busy,startTransition]=useTransition();const state=copy[profile.status];
+ return <main className={shared.page}><div className={shared.inner}><header className={shared.heading}><div><p className={shared.eyebrow}>Your dealership / Application status</p><h1>{state.title}</h1><p className={shared.intro}>{state.body}</p></div></header><section className={`${styles.card} ${styles.status}`}><span className={shared.badge}>{state.label}</span><dl className={styles.details}><div><dt>Dealership</dt><dd>{profile.companyName}</dd></div><div><dt>Business phone</dt><dd>{profile.phone}</dd></div>{profile.address&&<div><dt>Address</dt><dd>{profile.address}</dd></div>}</dl>{profile.status==='rejected'&&<div className={styles.reason}><h2>Review feedback</h2><p>{profile.rejectionReason||'No review reason is available.'}</p></div>}<p>Check your status here. Once approved, this page will take you to your dealer workspace.</p><div className={styles.actions}><button className={shared.primary} disabled={busy} onClick={()=>startTransition(()=>router.refresh())}>{busy?'Checking…':'Check application status'}</button><Link className={shared.secondary} href='/cars'>Explore the marketplace ↗</Link></div></section></div></main>;
+}

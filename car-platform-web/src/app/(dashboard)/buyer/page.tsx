@@ -5,7 +5,7 @@ export default function BuyerPage() {
     <main className='mx-auto max-w-6xl p-6'>
       <h1 className='text-3xl font-bold'>Buyer Dashboard</h1>
 
-      <div className='mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'><Link href='/buyer/enquiries' className='rounded-2xl border p-5 hover:bg-black/5'><h2 className='text-lg font-semibold'>My enquiries</h2><p className='mt-2 text-sm opacity-70'>Revisit your vehicle enquiries and see their progress.</p></Link>
         <Link
           href='/buyer/favorites'
           className='rounded-2xl border p-5 hover:bg-black/5'

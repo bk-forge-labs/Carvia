@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import styles from '@/components/cars/Collection.module.css';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
@@ -23,6 +24,7 @@ function RegisterForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading) return;
 
     try {
       setLoading(true);
@@ -57,71 +59,71 @@ function RegisterForm() {
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-12'>
-      <section className='w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
+    <main className={styles.auth}>
+      <section className={styles.authPanel}>
         <div>
-          <p className='text-sm font-medium uppercase tracking-[0.2em] text-zinc-500'>
-            Join Carvia
+          <p className={styles.eyebrow}>
+            Join Veltrenne
           </p>
-          <h1 className='mt-2 text-3xl font-bold text-zinc-950'>
+          <h1>
             Create your account
           </h1>
-          <p className='mt-2 text-sm leading-6 text-zinc-600'>
-            Register as a buyer or dealer and continue into Carvia.
+          <p className={styles.intro}>
+            Register as a buyer or dealer and continue into Veltrenne.
           </p>
         </div>
 
         {error ? (
-          <p className='mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+          <p className={styles.error}>
             {error}
           </p>
         ) : null}
 
-        <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
-          <label className='block'>
-            <span className='text-sm font-medium text-zinc-700'>Name</span>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <label>
+            <span>Name</span>
             <input
-              value={name}
+              autoComplete='name' minLength={2} maxLength={50} value={name}
               onChange={e => setName(e.target.value)}
               required
-              className='mt-2 w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-950 outline-none focus:border-zinc-950'
+
               placeholder='Your name'
             />
           </label>
 
-          <label className='block'>
-            <span className='text-sm font-medium text-zinc-700'>Email</span>
+          <label>
+            <span>Email</span>
             <input
-              type='email'
+              type='email' autoComplete='email'
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className='mt-2 w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-950 outline-none focus:border-zinc-950'
+
               placeholder='you@example.com'
             />
           </label>
 
-          <label className='block'>
-            <span className='text-sm font-medium text-zinc-700'>Password</span>
+          <label>
+            <span>Password</span>
             <input
-              type='password'
+              type='password' autoComplete='new-password'
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              minLength={6}
-              className='mt-2 w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-950 outline-none focus:border-zinc-950'
-              placeholder='At least 6 characters'
+              minLength={12}
+
+              placeholder='At least 12 characters'
             />
           </label>
 
-          <label className='block'>
-            <span className='text-sm font-medium text-zinc-700'>Role</span>
+          <label>
+            <span>Role</span>
             <select
               value={role}
               onChange={e =>
                 setRole(e.target.value as RegisterBrowserPayload['role'])
               }
-              className='mt-2 w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-950 outline-none focus:border-zinc-950'
+
             >
               <option value='buyer'>Buyer</option>
               <option value='dealer'>Dealer</option>
@@ -131,15 +133,15 @@ function RegisterForm() {
           <button
             type='submit'
             disabled={loading}
-            className='w-full rounded-xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-60'
+            className={styles.primary}
           >
             {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
 
-        <p className='mt-6 text-center text-sm text-zinc-600'>
+        <p className={styles.intro}>
           Already have an account?{' '}
-          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className='font-medium text-zinc-950 underline'>
+          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className={styles.link}>
             Log in
           </Link>
         </p>
@@ -149,5 +151,5 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
-  return <Suspense fallback={<main className='p-8' aria-busy='true'>Loading registration…</main>}><RegisterForm /></Suspense>;
+  return <Suspense fallback={<main aria-busy='true'>Loading registration…</main>}><RegisterForm /></Suspense>;
 }

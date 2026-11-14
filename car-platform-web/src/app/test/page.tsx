@@ -1,3 +1,2 @@
-export default function TestPage() {
-  return <main style={{ padding: 24 }}>Test OK</main>;
-}
+import { notFound } from 'next/navigation';
+export default function Page() { notFound(); }

@@ -24,30 +24,11 @@ export async function getDealerCarsServer() {
 }
 
 export async function getDealerCarByIdServer(carId: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const res = await fetch(`${API_URL}/dealer/cars/my`, {
-    method: 'GET',
-    headers: {
-      Cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
-
+  const cookieHeader = (await cookies()).toString();
+  const res = await fetch(`${API_URL}/dealer/cars/${encodeURIComponent(carId)}`, {headers:{Cookie:cookieHeader},cache:'no-store',signal:AbortSignal.timeout(10000)});
   const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data?.message || 'Failed to fetch dealer cars');
-  }
-
-  const cars = Array.isArray(data.data) ? data.data : [];
-  const car = cars.find((item: { _id: string }) => item._id === carId);
-
-  if (!car) {
-    throw new Error('Car not found');
-  }
-
-  return car;
+  if (!res.ok) throw new Error(data?.message || 'Could not load this vehicle.');
+  return data.data;
 }
 
 export async function getDealerCarReadinessServer(carId: string): Promise<{ready:boolean;issues:string[]}> {

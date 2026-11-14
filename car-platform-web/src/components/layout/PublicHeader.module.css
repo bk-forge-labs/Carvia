@@ -115,3 +115,5 @@
 .join { min-width: 176px; min-height: 46px; font-size: 14px; font-weight: 400; }
 @media (min-width:1000px) and (max-width:1100px) { .header .inner { margin-inline: 4%; gap: 24px; } .desktopNav { gap: 22px; } .join { min-width: 132px; } .logo { width: 190px; } }
 @media (max-width:999px) { .header[data-home='true'] { margin-bottom: -77px; } .header .inner { margin-inline: 20px; min-height: 76px; gap: 16px; } .join { min-width: 150px; font-size: 12px; } }
+
+.account{justify-self:end}.header .inner{grid-template-columns:1fr auto auto auto;gap:24px}.desktopNav{gap:26px}.actions{gap:16px}.header .join{min-width:140px}@media(min-width:1000px) and (max-width:1200px){.header .inner{margin-inline:3%;gap:18px}.desktopNav{gap:18px}.logo{width:180px}.navLink{font-size:12px}.header .join{min-width:110px;padding:0 12px;font-size:12px}}@media(max-width:999px){.account{margin-left:auto}.header .inner{gap:14px}.toggle{gap:6px}}@media(max-width:600px){.logo{width:150px}.toggle>span{display:none}.header .inner{margin-inline:16px;gap:12px}}
