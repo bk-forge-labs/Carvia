@@ -9,6 +9,9 @@ const carSchema = new mongoose.Schema(
     importBatch: {type:String,index:true},
     imageCredit: {source:String,author:String,license:String,licenseUrl:String},
     isDemo: { type: Boolean, default: false },
+    exteriorColor: {type:String, enum:['', ...require('../utils/vehicleSearch').colors]},
+    seats: {type:Number,min:1,max:9,validate: {validator:v=>v==null||Number.isInteger(v)}},
+    doors: {type:Number,min:1,max:6,validate: {validator:v=>v==null||Number.isInteger(v)}},
     fuelType: String, transmission: String, location: String,
     price: {
       type: Number,
@@ -76,6 +79,10 @@ carSchema.pre('validate', function () { invalidateChangedReview(this); assertPub
 carSchema.pre('findOneAndUpdate', async function () {
   const current = await this.model.findOne(this.getQuery()).session(this.getOptions().session || null).lean();
   if (!current) return;
+  // The exact version validated below must be the version written.
+  this._publicationVersionChecked = true;
+  this.setQuery({ $and: [this.getQuery(), current.__v == null
+    ? { __v: { $exists: false } } : { __v: current.__v }] });
   const update = this.getUpdate();
   update.$inc = { ...(update.$inc || {}), __v: 1 };
   this.setUpdate(update);
@@ -88,4 +95,11 @@ carSchema.pre('findOneAndUpdate', async function () {
   }
   assertPublishable(candidate);
 });
+carSchema.post('findOneAndUpdate', function (result) {
+  if (this._publicationVersionChecked && !result) {
+    throw new (require('../utils/AppError'))('This vehicle changed while you were editing. Refresh and try again.', 409);
+  }
+});
+carSchema.index({ isPublished: 1, createdAt: -1 });
+carSchema.index({ dealer: 1, createdAt: -1 });
 module.exports = mongoose.model('Car', carSchema);

@@ -14,6 +14,12 @@ const createCarSchema = z.object({
   owner: z.enum(['Dealer', 'Private']),
   condition: z.enum(['Smoker', 'Non-Smoker']),
   bodyStyle: z.enum(['', ...['SUV', 'Sedan', 'Coupe', 'Convertible', 'Hatchback', 'Estate', 'Van']]).optional(),
+  exteriorColor: z.enum(['', ...require('../utils/vehicleSearch').colors]).optional(),
+  seats: z.number().int().min(1).max(9).nullable().optional(),
+  doors: z.number().int().min(1).max(6).nullable().optional(),
+  fuelType: z.enum(['', 'Petrol', 'Diesel', 'Electric', 'Hybrid', 'Plug-in hybrid', 'LPG', 'Hydrogen', 'Other']).optional(),
+  transmission: z.enum(['', 'Automatic', 'Manual', 'Other']).optional(),
+  location: z.string().trim().max(200).optional(),
   description: z.string().trim().optional(),
 });
 
@@ -41,6 +47,12 @@ const updateCarSchema = z
     owner: z.enum(['Dealer', 'Private']).optional(),
     condition: z.enum(['Smoker', 'Non-Smoker']).optional(),
     bodyStyle: z.enum(['', ...['SUV', 'Sedan', 'Coupe', 'Convertible', 'Hatchback', 'Estate', 'Van']]).optional(),
+  exteriorColor: z.enum(['', ...require('../utils/vehicleSearch').colors]).optional(),
+  seats: z.number().int().min(1).max(9).nullable().optional(),
+  doors: z.number().int().min(1).max(6).nullable().optional(),
+  fuelType: z.enum(['', 'Petrol', 'Diesel', 'Electric', 'Hybrid', 'Plug-in hybrid', 'LPG', 'Hydrogen', 'Other']).optional(),
+  transmission: z.enum(['', 'Automatic', 'Manual', 'Other']).optional(),
+  location: z.string().trim().max(200).optional(),
   description: z.string().trim().optional(),
   })
   .strict();

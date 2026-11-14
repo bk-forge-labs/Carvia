@@ -16,9 +16,9 @@ exports.protect = asyncHandler(async (req, res, next) => {
     throw new AppError('Not authorized', 401);
   }
 
-  const user = await User.findById(decoded.id).select('_id name email role');
+  const user = await User.findById(decoded.id).select('_id name email role authVersion emailVerifiedAt');
 
-  if (!user) {
+  if (!user || (decoded.authVersion || 0) !== (user.authVersion || 0)) {
     throw new AppError('Not authorized', 401);
   }
 
@@ -27,6 +27,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    emailVerifiedAt: user.emailVerifiedAt,
   };
 
   return next();
@@ -68,8 +69,8 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select('_id name email role');
-    if (!user) {
+    const user = await User.findById(decoded.id).select('_id name email role authVersion emailVerifiedAt');
+    if (!user || (decoded.authVersion || 0) !== (user.authVersion || 0)) {
       return res
         .status(401)
         .json({ success: false, message: 'Not authorized' });
@@ -80,6 +81,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+    emailVerifiedAt: user.emailVerifiedAt,
     };
 
     return next();

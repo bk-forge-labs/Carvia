@@ -1,3 +1,5 @@
+const { publicInventory } = require('../utils/publicInventory');
+const { removeUnusedUploads } = require('../utils/removeUnusedUploads');
 const mongoose = require('mongoose');
 const Car = require('../models/Car');
 const path = require('path');
@@ -41,7 +43,7 @@ exports.getCars = async (req, res) => {
       data: cars,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ success: false, message: error.message });
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({ success: false, message: error.message });
   }
 };
 exports.getCar = async (req, res) => {
@@ -55,7 +57,7 @@ exports.getCar = async (req, res) => {
       data: car,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ success: false, message: error.message });
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({ success: false, message: error.message });
   }
 };
 
@@ -68,40 +70,7 @@ exports.getCarsPublic = async (req, res) => {
       50
     );
     const skip = (page - 1) * limit;
-    const filter = { isPublished: true };
-    if (req.query.brand) {
-      const b = String(req.query.brand).trim();
-      if (b) {
-        const escaped = b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        filter.brand = {
-          $regex: `^${escaped}$`,
-          $options: 'i',
-        };
-      }
-    }
-
-    if (req.query.bodyStyle) {
-      if (!['SUV', 'Sedan', 'Coupe', 'Convertible', 'Hatchback', 'Estate', 'Van'].includes(req.query.bodyStyle)) {
-        return res.status(400).json({ success: false, message: 'Invalid body style' });
-      }
-      filter.bodyStyle = req.query.bodyStyle;
-    }
-
-    const minPrice = parseNum(req.query.minPrice);
-    const maxPrice = parseNum(req.query.maxPrice);
-    if (minPrice !== null || maxPrice !== null) {
-      filter.price = {};
-      if (minPrice !== null) filter.price.$gte = minPrice;
-      if (maxPrice !== null) filter.price.$lte = maxPrice;
-    }
-
-    const minYear = parseNum(req.query.minYear);
-    const maxYear = parseNum(req.query.maxYear);
-    if (minYear !== null || maxYear !== null) {
-      filter.year = {};
-      if (minYear !== null) filter.year.$gte = minYear;
-      if (maxYear !== null) filter.year.$lte = maxYear;
-    }
+    const filter = {...publicInventory(), ...require('../utils/vehicleSearch').vehicleSearch(req.query)};
 
     // Read sort params + build sort object :
     const sortKey =
@@ -120,9 +89,12 @@ exports.getCarsPublic = async (req, res) => {
         .skip(skip)
         .limit(limit)
         .select(
-          'title price mainImage images brand bodyStyle year mileage fuelType transmission location owner condition createdAt dealer isDemo'
+          'title price mainImage images brand model bodyStyle year mileage fuelType transmission location exteriorColor seats doors owner condition createdAt dealer isDemo'
         ).populate('dealer', 'name'),
     ]);
+    const profiles = await DealerProfile.find({user: {$in: cars.map(car => car.dealer?._id).filter(Boolean)}}).select('user companyName').lean();
+    const names = new Map(profiles.map(profile => [String(profile.user), profile.companyName]));
+    const publicCars = cars.map(car => ({...car.toObject(), sellerName: names.get(String(car.dealer?._id)) || 'Dealership'}));
     const totalPages = totalCars === 0 ? 0 : Math.ceil(totalCars / limit);
 
     return res.status(200).json({
@@ -134,19 +106,19 @@ exports.getCarsPublic = async (req, res) => {
         totalCars,
         totalPages,
       },
-      data: cars,
+      data: publicCars,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
 
 exports.getCarBrandsPublic = async (req, res) => {
   try {
-    const brands = await Car.distinct('brand', { isPublished: true });
+    const brands = await Car.distinct('brand', publicInventory());
 
     // Normalize + sort (stable UX)
     const cleaned = brands
@@ -160,9 +132,9 @@ exports.getCarBrandsPublic = async (req, res) => {
       data: cleaned,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -176,7 +148,7 @@ exports.getCarByIdPublic = async (req, res) => {
         message: 'Invalid car id',
       });
     }
-    const car = await Car.findOne({ _id: carId, isPublished: true }).select('-publicationHold -publicationReview -reviewHistory -__v').populate(
+    const car = await Car.findOne({ _id: carId, ...publicInventory() }).select('-publicationHold -publicationReview -reviewHistory -__v').populate(
       'dealer',
       'name email role'
     );
@@ -196,7 +168,7 @@ exports.getCarByIdPublic = async (req, res) => {
 
     const similarFilter = {
       _id: { $ne: car._id },
-      isPublished: true,
+      ...publicInventory(),
     };
 
     if (car.brand) {
@@ -207,7 +179,7 @@ exports.getCarByIdPublic = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(4)
       .select(
-        'title price mainImage images brand bodyStyle year mileage fuelType transmission location owner condition createdAt dealer isDemo'
+        'title price mainImage images brand model bodyStyle year mileage fuelType transmission location exteriorColor seats doors owner condition createdAt dealer isDemo'
       );
     return res.status(200).json({
       success: true,
@@ -216,9 +188,9 @@ exports.getCarByIdPublic = async (req, res) => {
       similarCars,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -266,7 +238,7 @@ exports.createCar = async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -343,7 +315,7 @@ exports.getMyCars = async (req, res) => {
       data: cars,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ message: error.message });
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({ message: error.message });
   }
 };
 
@@ -359,7 +331,7 @@ exports.publishMyCar = async (req,res) => {
       return updated;
     });
     return res.json({success:true,data:car,message:'Car published'});
-  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.message}); }
+  } catch(error) { return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({success:false,message:error.message}); }
 };
 
 exports.unpublishMyCar = async (req, res) => {
@@ -388,9 +360,9 @@ exports.unpublishMyCar = async (req, res) => {
       data: update,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -417,6 +389,7 @@ exports.updateMyCar = async (req, res) => {
       'owner',
       'condition',
       'description',
+      'fuelType', 'transmission', 'location', 'exteriorColor', 'seats', 'doors',
     ];
 
     const updates = {};
@@ -457,9 +430,9 @@ exports.updateMyCar = async (req, res) => {
       data: updated,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -486,14 +459,15 @@ exports.deleteMyCar = async (req, res) => {
       });
     }
 
+    await removeUnusedUploads(deleted.images);
     return res.status(200).json({
       success: true,
       message: 'Car deleted successfully',
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -553,7 +527,7 @@ exports.uploadMyCarImages = async (req, res) => {
     await Promise.all((req.files || []).map(file => fs.promises.unlink(file.path).catch(() => {})));
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -586,6 +560,7 @@ exports.deleteMyCarImage = async (req, res) => {
       });
     }
 
+    if (!car.images.includes(url)) return res.status(404).json({ success: false, message: 'Photo not found on this listing.' });
     car.images = car.images.filter(img => img !== url);
 
     if (car.mainImage === url) {
@@ -594,10 +569,7 @@ exports.deleteMyCarImage = async (req, res) => {
 
     await car.save();
 
-    /*    const filename = url.replace('/uploads', '');
-    const filePath = path.join(__dirname, '..', 'uploads', filename);
-
-    fs.unlink(filePath, err => {}); */
+    await removeUnusedUploads([url]);
 
     return res.status(200).json({
       success: true,
@@ -605,9 +577,9 @@ exports.deleteMyCarImage = async (req, res) => {
       data: car,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
+    return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.name === 'VersionError' ? 'This vehicle changed. Refresh and try again.' : error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -675,3 +647,5 @@ exports.getMyCarReadiness = async (req, res) => {
     return res.status(500).json({success:false,message:'Unable to check publication readiness. Please try again.'});
   }
 };
+
+exports.getCarModelsPublic = async (req,res) => { try {const {text,exact}=require('../utils/vehicleSearch');const brand=text(req.query,'brand');if(!brand)return res.json({data:[]});const models=await Car.distinct('model',{...publicInventory(),brand:exact(brand)});res.json({data:models.filter(v=>typeof v==='string'&&v.trim()).sort()});}catch(e){res.status(e.statusCode||500).json({message:e.statusCode?e.message:'Could not load models.'});}};

@@ -1,14 +1,13 @@
 const User = require('../models/User');
 
-const bcrypt = require('bcryptjs');
+const { authInput } = require('../utils/authInput');
 
-const jwt = require('jsonwebtoken');
 
 const { signToken, cookieOptions } = require('../utils/jwt');
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role } = authInput(req.body, true);
 
     // Check if the user exists:
     const userExists = await User.findOne({ email });
@@ -30,9 +29,13 @@ exports.register = async (req, res) => {
       role: accountRole,
     });
 
-    const token = signToken({ id: user._id.toString(), role: user.role });
+    const token = signToken({ id: user._id.toString(), role: user.role, authVersion: user.authVersion || 0 });
     res.cookie('access_token', token, cookieOptions());
 
+    if (require('../services/accountMail').mailConfigured()) {
+      try { await require('./accountSecurityController').security.issue(user, 'verify'); }
+      catch { console.error('Registration verification could not be scheduled. The account can request another link.'); }
+    }
     res.status(201).json({
       message: 'User registered successfully',
       user: {
@@ -43,7 +46,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(error.statusCode || (error.code === 11000 ? 400 : 500)).json({ message: error.statusCode ? error.message : error.code === 11000 ? 'Unable to register with these details.' : 'Registration is unavailable. Please try again.' });
   }
 };
 
@@ -53,7 +56,7 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = authInput(req.body);
 
     if (!email || !password) {
       return res.status(400).json({
@@ -80,7 +83,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const token = signToken({ id: user._id.toString(), role: user.role });
+    const token = signToken({ id: user._id.toString(), role: user.role, authVersion: user.authVersion || 0 });
 
     res.cookie('access_token', token, cookieOptions());
 
@@ -94,9 +97,9 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Sign-in is unavailable. Please try again.',
     });
   }
 };

@@ -18,10 +18,8 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       index: true,
-      match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-        'Please use a valid email address',
-      ],
+      maxlength: 254,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please use a valid email address'],
     },
     password: {
       type: String,
@@ -30,6 +28,8 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    emailVerifiedAt: { type: Date, default: null },
+    authVersion: { type: Number, default: 0 },
     favorites: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Car' }],
       default: [],

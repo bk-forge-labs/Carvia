@@ -1,0 +1,10 @@
+const router = require('express').Router();
+const {protect} = require('../middleware/authMiddleware');
+const {authorize} = require('../middleware/roleMiddleware');
+const controller = require('../controllers/enquiryController');
+router.use(protect);
+router.post('/',authorize('buyer'),controller.create);
+router.get('/summary',authorize('dealer'),controller.summary);
+router.get('/',authorize('buyer','dealer'),controller.list);
+router.patch('/:id',authorize('dealer'),controller.update);
+module.exports = router;

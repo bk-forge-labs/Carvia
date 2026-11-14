@@ -5,11 +5,11 @@ exports.notFound = (req, res, next) => {
 
 exports.errorHandler = (err, req, res, next) => {
   const statusCode =
-    err.statusCode ||
+    (err.name === 'VersionError' ? 409 : err.statusCode) ||
     (res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
 
   return res.status(statusCode).json({
     success: false,
-    message: err.message || 'Server error',
+    message: statusCode >= 500 && !err.isOperational ? 'Service unavailable. Please try again.' : err.name === 'VersionError' ? 'This record changed. Refresh and try again.' : err.message || 'Request failed',
   });
 };

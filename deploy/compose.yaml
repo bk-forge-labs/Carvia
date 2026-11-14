@@ -9,6 +9,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Set a strong secret}
       CORS_ORIGINS: https://${DOMAIN:?Set the public domain}
       UPLOAD_DIR: /data/uploads
+      PUBLIC_WEB_URL: https://${DOMAIN:?Set the public domain}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     volumes:
       - uploads:/data/uploads
     healthcheck:

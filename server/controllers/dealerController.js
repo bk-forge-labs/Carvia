@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const AppError = require('../utils/AppError');
+const {serializeDealerProfile} = require('../utils/dealerProfileResponse');
 const Car = require('../models/Car');
 const DealerProfile = require('../models/DealerProfile');
 
@@ -29,7 +32,7 @@ exports.getMyProfile = async (req, res) => {
   try {
     const profile = await DealerProfile.findOne({ user: req.user.id })
       .select(
-        'companyName, phone address status rejectionReason moderation createdAt updatedAt'
+        'companyName phone address status rejectionReason moderation createdAt updatedAt user'
       )
       .populate('user', 'name email role');
 
@@ -39,25 +42,7 @@ exports.getMyProfile = async (req, res) => {
         .json({ success: false, message: 'Dealer profile not found' });
     }
 
-    const safeData = {
-      id: profile._id,
-      user: profile.user,
-      canPostCars: profile.status === 'approved',
-      companyName: profile.companyName,
-      phone: profile.phone,
-      address: profile.address,
-      status: profile.status,
-      rejectionReason:
-        profile.status === 'rejected' ? profile.rejectionReason : '',
-      lastModeration: profile.moderation?.at
-        ? {
-            lastAction: profile.moderation.lastAction,
-            at: profile.moderation.at,
-          }
-        : null,
-      createdAt: profile.createdAt,
-      updatedAt: profile.updatedAt,
-    };
+    const safeData = serializeDealerProfile(profile);
 
     return res.status(200).json({
       success: true,
@@ -66,55 +51,49 @@ exports.getMyProfile = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
 
 exports.updateMyProfile = async (req, res) => {
-  console.log('✅ updateMyProfile HIT', req.method, req.originalUrl);
   try {
-    const allowedFields = ['companyName', 'phone', 'address'];
     const updates = {};
-
-    for (const key of allowedFields) {
-      if (req.body && req.body[key] !== undefined) {
-        updates[key] = req.body[key];
+    for (const key of ['companyName', 'phone', 'address']) {
+      if (req.body?.[key] === undefined) continue;
+      if (typeof req.body[key] !== 'string' || req.body[key].trim().length > 300 || (key !== 'address' && !req.body[key].trim())) {
+        throw new AppError('Enter valid business details (up to 300 characters per field).', 400);
       }
+      updates[key] = req.body[key].trim();
     }
-
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No valid fields to update',
-      });
-    }
-    const updated = await DealerProfile.findOneAndUpdate(
-      { user: req.user.id },
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).maxTimeMS(5000);
-
-    if (!updated) {
-      return res.status(404).json({
-        success: false,
-        message: 'Dealer profile not found',
-      });
-    }
-
-    const populated = await DealerProfile.findById(updated._id)
-      .populate('user', 'name email role')
-      .maxTimeMS(5000);
-
-    return res.status(200).json({
-      success: true,
-      data: populated,
+    if (!Object.keys(updates).length) throw new AppError('No valid fields to update', 400);
+    const profile = await mongoose.connection.transaction(async session => {
+      const current = await DealerProfile.findOne({ user: req.user.id }).session(session);
+      if (!current) throw new AppError('Dealer profile not found', 404);
+      const changed = Object.keys(updates).some(key => updates[key] !== (current[key] || ''));
+      if (!changed) return current;
+      const requiresReview = current.status === 'approved';
+      const at = new Date();
+      const write = { $set: updates, $inc: { publicationVersion: 1 } };
+      if (requiresReview) {
+        write.$set = { ...updates, status: 'pending', rejectionReason: '' };
+        write.$push = { reviewHistory: { action: 'identity_changed', from: 'approved', to: 'pending', by: req.user.id, at, note: 'Dealer changed business details. A new review is required.' } };
+      }
+      const updated = await DealerProfile.findOneAndUpdate(
+        { _id: current._id, updatedAt: current.updatedAt, status: current.status }, write,
+        { new: true, runValidators: true, session }
+      );
+      if (!updated) throw new AppError('Your profile changed. Refresh and try again.', 409);
+      if (requiresReview) await Car.updateMany({ dealer: req.user.id, isPublished: true }, {
+        $set: { isPublished: false }, $inc: { __v: 1 },
+        $push: { reviewHistory: { action: 'dealer_identity_changed', by: req.user.id, at, note: 'Listing unpublished pending review of updated dealer details.' } }
+      }, { session });
+      return updated;
     });
+    await profile.populate('user', 'name email role');
+    return res.json({ success: true, data: serializeDealerProfile(profile) });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : 'Could not update your business details. Please try again.' });
   }
 };
 
@@ -149,7 +128,7 @@ exports.getMyStats = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -212,7 +191,7 @@ exports.getMyCarsPaginated = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };

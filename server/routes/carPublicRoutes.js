@@ -9,6 +9,7 @@ const {
 
 router.get('/', getCarsPublic);
 router.get('/meta/brands', getCarBrandsPublic);
+router.get('/meta/models', require('../controllers/carController').getCarModelsPublic);
 router.get('/:id', getCarByIdPublic);
 
 module.exports = router;

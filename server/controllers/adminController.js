@@ -13,7 +13,7 @@ const moderateDealer = action => async (req,res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({success:false,message:'Invalid dealer profile id'});
     const result = await moderationService.dealer(req.params.id,action,req.body,req.user.id);
     return res.json({success:true,data:result.dealer,unpublished:result.unpublished});
-  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.message}); }
+  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.statusCode ? error.message : 'Could not complete the request. Please try again.'}); }
 };
 exports.approveDealer=moderateDealer('approve');
 exports.rejectDealer=moderateDealer('reject');
@@ -26,14 +26,14 @@ exports.getCarReview = async (req,res) => {
     if (!car) return res.status(404).json({success:false,message:'Vehicle not found'});
     const seller = car.dealer?._id ? await DealerProfile.findOne({user:car.dealer._id}).select('companyName status').lean() : null;
     return res.json({success:true,data:car,seller,issues:publicationIssues({...car,publicationHold:''})});
-  } catch(error) { return res.status(500).json({success:false,message:error.message}); }
+  } catch(error) { return res.status(500).json({success:false,message:error.statusCode ? error.message : 'Could not complete the request. Please try again.'}); }
 };
 exports.releaseCarHold = async (req,res) => {
   try {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({success:false,message:'Invalid vehicle id'});
     const car = await moderationService.release(req.params.id,req.body,req.user.id);
     return res.json({success:true,data:car,message:'Hold released. The vehicle remains a draft.'});
-  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.message}); }
+  } catch(error) { return res.status(error.statusCode || 500).json({success:false,message:error.statusCode ? error.message : 'Could not complete the request. Please try again.'}); }
 };
 
 exports.getDealerById = async (req, res) => {
@@ -65,7 +65,7 @@ exports.getDealerById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -87,7 +87,7 @@ exports.getDealerStats = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -112,7 +112,7 @@ exports.getDealerAuditFeed = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -127,6 +127,7 @@ exports.getAdminStats = async (req, res) => {
       publishedCars,
       totalBookings,
       pendingBookings,
+      heldCars,
     ] = await Promise.all([
       User.countDocuments({ role: 'buyer' }),
       User.countDocuments({ role: 'dealer' }),
@@ -135,6 +136,7 @@ exports.getAdminStats = async (req, res) => {
       Car.countDocuments({ isPublished: true }),
       Booking.countDocuments({}),
       Booking.countDocuments({ status: 'pending' }),
+      Car.countDocuments({ publicationHold: { $type: 'string', $ne: '' } }),
     ]);
 
     return res.status(200).json({
@@ -149,6 +151,7 @@ exports.getAdminStats = async (req, res) => {
         },
         cars: {
           total: totalCars,
+          held: heldCars,
           published: publishedCars,
           unpublished: totalCars - publishedCars,
         },
@@ -161,7 +164,7 @@ exports.getAdminStats = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -204,7 +207,7 @@ exports.getAllCarsAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -241,7 +244,7 @@ exports.unpublishCarAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -257,9 +260,8 @@ exports.getAllDealersAdmin = async (req, res) => {
 
     const filter = {};
 
-    if (req.query.status) {
-      filter.status = req.query.status;
-    }
+    if (req.query.status) filter.status = req.query.status;
+    if (typeof req.query.q === 'string' && req.query.q.trim()) filter.companyName = { $regex: req.query.q.trim().slice(0,100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
 
     const [totalDealers, dealers] = await Promise.all([
       DealerProfile.countDocuments(filter),
@@ -283,7 +285,7 @@ exports.getAllDealersAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -321,7 +323,7 @@ exports.approveBookingAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -367,7 +369,7 @@ exports.cancelBookingAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };
@@ -411,7 +413,7 @@ exports.getAllBookingsAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.statusCode ? error.message : 'Could not complete the request. Please try again.',
     });
   }
 };

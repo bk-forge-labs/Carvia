@@ -33,6 +33,7 @@ router.use(authorize('dealer'));
 
 // GET /api/dealer/cars/my
 router.get('/my', getMyCars);
+router.get('/:id', checkCarOwnerShip, (req,res) => res.json({ success:true, data:req.car }));
 router.get('/:id/readiness', checkCarOwnerShip, getMyCarReadiness);
 
 // POST /api/dealer/cars

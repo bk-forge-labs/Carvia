@@ -25,7 +25,8 @@ function publicationIssues(car, photographExists = imageExists) {
   return issues;
 }
 function reviewFingerprint(car) {
-  const fields = ['title','brand','model','year','mileage','price','bodyStyle','owner','condition','description','dealer','mainImage','images'];
+  const fields = ['title','brand','model','year','mileage','price','bodyStyle','fuelType','transmission','location','owner','condition','description','dealer','mainImage','images'];
+  for(const field of ['exteriorColor','seats','doors'])if(car[field]!=null&&car[field]!=='')fields.push(field);
   return createHash('sha256').update(JSON.stringify(fields.map(field => car[field] ?? (field === 'images' ? [] : '')))).digest('hex');
 }
 function invalidateChangedReview(car) {

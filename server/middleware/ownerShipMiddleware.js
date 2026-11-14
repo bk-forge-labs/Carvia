@@ -2,6 +2,7 @@ const Car = require('../models/Car');
 
 exports.checkCarOwnerShip = async (req, res, next) => {
   try {
+    if (!require('mongoose').isValidObjectId(req.params.id)) return res.status(400).json({message:'Invalid vehicle id'});
     const car = await Car.findById(req.params.id);
 
     if (!car) {
@@ -26,6 +27,6 @@ exports.checkCarOwnerShip = async (req, res, next) => {
     req.car = car;
     next();
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Could not load this vehicle. Please try again.' });
   }
 };
