@@ -41,6 +41,7 @@ app.use('/api/cars', require('./routes/carPublicRoutes'));
 app.use('/api/dealer/cars', require('./routes/carDealerRoutes'));
 app.use('/api/favorites', require('./routes/favoriteRoutes'));
 app.use('/api/enquiries', require('./routes/enquiryRoutes'));
+app.use('/api/workspace', require('./routes/workspaceRoutes'));
 
 //Test route
 app.get('/', (req, res) => {
@@ -65,7 +66,7 @@ app.use(errorHandler);
 
 // Starting the server
 databaseReady.then(async () => {
-  await Promise.all([require('./models/Enquiry').init(), require('./models/AccountToken').init()]);
+  await Promise.all([require('./models/Enquiry').init(), require('./models/AccountToken').init(), require('./models/Appointment').init(), require('./models/FollowUpTask').init(), require('./models/WorkspaceMessage').init()]);
   app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   });
