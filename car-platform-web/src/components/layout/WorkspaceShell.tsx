@@ -62,15 +62,22 @@ function Workspace({role, path, children}: {role: Role; path: string; children: 
     }
   }, [path]);
   const root = admin ? '/admin' : dealer ? '/dealer' : '/buyer';
+  const operations: Destination[] = [
+    {href:'/calendar',label:'Calendar',icon:'overview',description:'Your private meetings and test drives'},
+    {href:'/tasks',label:'Follow-up tasks',icon:'people',description:'Your next actions and due dates'},
+    {href:'/email',label:'Email history',icon:'mail',description:'Confirmation acceptance and failure records'},
+  ];
   const destinations: Destination[] = admin ? [
     {href: root, label: 'Overview', icon: 'overview', description: 'Your review queues at a glance'},
     {href: '/admin/dealers', label: 'Dealer reviews', icon: 'people', description: 'Applications, approvals and dealerships'},
     {href: '/admin/cars', label: 'Inventory review', icon: 'cars', description: 'Listing quality and publication holds'},
     {href: '/bookings', label: 'Bookings', icon: 'overview', description: 'Service booking records'},
+    ...operations,
   ] : dealer ? [
     {href: root, label: 'Overview', icon: 'overview', description: 'Your showroom at a glance'},
     {href: '/dealer/cars', label: 'Inventory', icon: 'cars', description: 'Find, prepare and publish your vehicles'},
     {href: '/dealer/enquiries', label: 'Enquiries', icon: 'mail', description: 'Buyer conversations and follow-ups'},
+    ...operations,
   ] : [
     {href: root, label: 'Overview', icon: 'overview', description: 'Your saved vehicles and conversations'},
     {href: '/buyer/favorites', label: 'Saved vehicles', icon: 'cars', description: 'Vehicles in your collection'},
@@ -98,7 +105,7 @@ function Workspace({role, path, children}: {role: Role; path: string; children: 
   function closeNavigation() { navigation.current?.close(); }
   function links(items: Destination[], mobile = false) {
     return items.map(item => <Link key={item.href} href={item.href} className={styles.navLink} title={collapsed && !mobile ? item.label : undefined} aria-label={item.label} aria-current={item === active ? 'page' : undefined} onNavigate={closeNavigation}>
-      <Icon name={item.icon}/><span className={styles.navLabel}>{item.label}</span>{dealer && item.icon === 'mail' && <span className={styles.count}><EnquiryCount/></span>}
+      <Icon name={item.icon}/><span className={styles.navLabel}>{item.label}</span>{dealer && item.href === '/dealer/enquiries' && <span className={styles.count}><EnquiryCount/></span>}
     </Link>);
   }
   function sidebar(mobile = false) {

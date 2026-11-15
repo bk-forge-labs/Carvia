@@ -4,7 +4,7 @@ export function safeReturnTo(value: string | null): string | null {
   try {
     const url = new URL(value, 'https://carvia.invalid');
     if (value.split(/[?#]/, 1)[0] !== url.pathname) return null;
-    if (url.origin !== 'https://carvia.invalid' || !/^\/(cars(?:\/[a-f0-9]{24})?|buyer(?:\/(?:favorites|enquiries))?|dealer(?:\/(?:enquiries|onboarding|pending|cars(?:\/(?:new|[a-f0-9]{24}(?:\/(?:edit|images))?))?)?)?|admin(?:\/(?:dealers|cars)(?:\/[a-f0-9]{24})?)?|account|bookings)$/.test(url.pathname)) return null;
+    if (url.origin !== 'https://carvia.invalid' || !/^\/(cars(?:\/[a-f0-9]{24})?|buyer(?:\/(?:favorites|enquiries))?|dealer(?:\/(?:enquiries|onboarding|pending|cars(?:\/(?:new|[a-f0-9]{24}(?:\/(?:edit|images))?))?)?)?|admin(?:\/(?:dealers|cars)(?:\/[a-f0-9]{24})?)?|account|bookings|calendar|tasks|email)$/.test(url.pathname)) return null;
     return url.pathname + url.search + (url.hash === "#vehicle-enquiry" ? url.hash : "");
   } catch { return null; }
 }

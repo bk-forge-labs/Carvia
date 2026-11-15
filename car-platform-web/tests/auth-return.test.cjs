@@ -31,3 +31,5 @@ test('known administrator destinations survive sign-in without allowing arbitrar
   }
   for (const destination of ['/admin/users', '/admin/dealers/invalid', '/admin/cars/aaaaaaaaaaaaaaaaaaaaaaaa/delete', '/admin//dealers']) assert.equal(safeReturnTo(destination), null);
 });
+
+test('connected workspace destinations survive sign-in',()=>{for(const value of ['/calendar','/calendar?appointment=aaaaaaaaaaaaaaaaaaaaaaaa','/tasks?enquiry=aaaaaaaaaaaaaaaaaaaaaaaa','/email?appointment=aaaaaaaaaaaaaaaaaaaaaaaa']) assert.equal(safeReturnTo(value),value);});
