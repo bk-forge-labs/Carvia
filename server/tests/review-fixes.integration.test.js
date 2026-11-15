@@ -11,9 +11,11 @@ test('isolated database: publication conflict, dealer re-review, single-use reco
  process.env.UPLOAD_DIR=dir;
  const Car=require('../models/Car'),Profile=require('../models/DealerProfile'),User=require('../models/User'),Token=require('../models/AccountToken');
  await mongoose.connect(uri);
+ let fixtureUser;
  try {
   await Promise.all([Car.init(),Profile.init(),User.init(),Token.init()]);
-  const user=await User.create({name:'Review Dealer',email:'review-dealer@example.invalid',password:'original test password',role:'dealer'});
+  const user=await User.create({name:'Review Dealer',email:'review-dealer-'+require('node:crypto').randomUUID()+'@example.invalid',password:'original test password',role:'dealer'});
+  fixtureUser=user;
   await Profile.create({user:user._id,companyName:'Reviewed Business',phone:'123',address:'Test',status:'approved'});
   await fs.writeFile(path.join(dir,'vehicle.png'),await require('sharp')({create:{width:3,height:3,channels:3,background:'white'}}).png().toBuffer());
   const car=await Car.create({title:'BMW i4',brand:'BMW',model:'i4',price:30000,year:2023,mileage:0,dealer:user._id,images:['/uploads/vehicle.png'],mainImage:'/uploads/vehicle.png'});
@@ -61,5 +63,12 @@ test('isolated database: publication conflict, dealer re-review, single-use reco
   const {removeUnusedUploads}=require('../utils/removeUnusedUploads');
   await removeUnusedUploads(['/uploads/vehicle.png']);await fs.access(path.join(dir,'vehicle.png'));
   await Car.deleteOne({_id:car._id});await removeUnusedUploads(['/uploads/vehicle.png']);await assert.rejects(fs.access(path.join(dir,'vehicle.png')));
- } finally {await mongoose.disconnect();await fs.rm(dir,{recursive:true,force:true});}
+ } finally {
+  if(fixtureUser && mongoose.connection.readyState===1) {
+    await Promise.all([Car.deleteMany({dealer:fixtureUser._id}),Profile.deleteMany({user:fixtureUser._id}),Token.deleteMany({user:fixtureUser._id})]);
+    await User.deleteOne({_id:fixtureUser._id});
+  }
+  await mongoose.disconnect();await fs.rm(dir,{recursive:true,force:true});
+ }
+
 });
