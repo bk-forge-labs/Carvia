@@ -1,6 +1,6 @@
 # Veltrenne connected workspace — local handoff
 
-Status: **implemented and locally committed; final visual verification and owner design approval pending. Not dashboard completion or release approval.**
+Status: **implemented and locally committed; composition owner approved; final browser verification pending. Not dashboard completion or release approval.**
 
 ## Repository and preservation
 
@@ -50,3 +50,7 @@ The second command seeds only the explicitly named loopback preview database, pr
 ## Files and external handoff
 
 [Every changed file and its purpose](workspace-connected-file-manifest-2026-11-15.md) includes the preserved rollout and connected implementation. [Prepared external update](workspace-connected-external-update-2026-11-15.md) is ready for the established project destination. No specific authorized Figma/Notion/Asana destination was established, so external synchronization is pending and no external write is claimed.
+
+## Owner approval and resumed browser audit
+
+The owner explicitly approved the proposed calendar/tasks/email composition on 15 November 2026. This supersedes the pending-design statements above. Chrome access was restored, superseding the earlier access failure. Native inspection observed the calendar header/month layout at 1440, 768 and 390 CSS px, plus the scrolled phone grid and selected-day agenda: controls and long appointment title remained within the visible panel. Tasks loaded with the two persisted fixtures. The attempted navigation to email was interrupted by a user tab change; Chrome reported the change and showed Vercel. No action was taken on Vercel. Further UI actions were paused to avoid interference. Remaining state, intermediate-width, calendar mutation, Back/Forward and drawer/focus checks are still open; no full audit completion is claimed.

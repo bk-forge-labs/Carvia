@@ -1,6 +1,6 @@
 # Veltrenne connected workspace — design proposal
 
-Status: implemented locally for review; **new calendar, task and email screen composition is not owner approved**. Existing shared-shell approval is preserved.
+Status: **calendar, task and email composition approved by the owner on 15 November 2026** in response to the concrete review question. Implementation verification remains separate; outstanding browser checks are tracked in the connected handoff. Existing shared-shell approval is preserved.
 
 Review locally at:
 - http://127.0.0.1:3021/calendar

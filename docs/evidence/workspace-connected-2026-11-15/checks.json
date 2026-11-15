@@ -58,7 +58,17 @@
       "cgWindowNotFound",
       "browser access host is unavailable"
     ],
-    "approval": "new-screen composition pending owner response"
+    "approval": "Owner explicitly approved composition on 2026-11-15",
+    "resumedAudit": {
+      "access": "restored",
+      "observed": [
+        "Calendar month/header at 1440,768,390 CSS px",
+        "Phone scrolled grid and selected-day agenda with wrapped long title",
+        "Tasks page loaded two persisted records"
+      ],
+      "interruption": "User changed Chrome to Vercel during email navigation; no Vercel action taken",
+      "remaining": "Remaining browser gates are open; previous access error is historical"
+    }
   },
   "noPush": true,
   "noMerge": true,
