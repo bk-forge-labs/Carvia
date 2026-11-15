@@ -1,4 +1,4 @@
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import WorkspaceShell from '@/components/layout/WorkspaceShell';
 
 export default function DashboardLayout({
   children,
@@ -6,9 +6,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <DashboardHeader />
-      {children}
-    </>
+    <WorkspaceShell>{children}</WorkspaceShell>
   );
 }
