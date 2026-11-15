@@ -2,6 +2,8 @@
 
 Status: **local implementation checkpoint; full scope remains unfinished. No release approval.**
 
+Implementation checkpoint: `8a6f032` (local only; no push).
+
 Started from clean `feat/veltrenne-connected-workspace` at `7c70192`. Both connected workspace and buyer screen compositions were explicitly approved by the owner. The [consolidated requirement checklist](buyer-experience-checklist-2026-11-15.md) remains the source of scope and acceptance status. Every row is required; implemented does not mean fully verified.
 
 ## Implemented
