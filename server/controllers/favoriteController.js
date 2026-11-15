@@ -66,7 +66,7 @@ exports.toggleFavorites = async (req, res) => {
 
 exports.getMyFavorites = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate({ path: 'favorites', match: publicInventory(), select: '-publicationHold -publicationReview -reviewHistory -__v' });
+    const user = await User.findById(req.user.id).select('favorites');
 
     if (!user) {
       return res.status(404).json({
@@ -77,7 +77,7 @@ exports.getMyFavorites = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: user.favorites,
+      data: await (async()=>{const visible=await Car.find({_id:{$in:user.favorites},...publicInventory()}).select('-publicationHold -publicationReview -reviewHistory -__v').lean();const byId=new Map(visible.map(car=>[String(car._id),car]));return user.favorites.map(id=>byId.get(String(id))||{_id:String(id),title:'Unavailable saved vehicle',isUnavailable:true});})(),
     });
   } catch (error) {
     return res.status(500).json({

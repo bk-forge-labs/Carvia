@@ -4,7 +4,7 @@ import {useQuery} from '@tanstack/react-query';
 import {useAuth} from '@/lib/store/auth';
 import {api} from '@/lib/api/browser';
 import styles from './Operations.module.css';
-export type Appointment={_id:string;__v:number;title:string;type:'meeting'|'test-drive';start:string;end:string;timeZone:string;status:'scheduled'|'cancelled'|'completed';notes:string;outcome:string;vehicle:string|null;enquiry:string|null;customer:string|null};
+export type Appointment={buyerRequest?:boolean;_id:string;__v:number;title:string;type:'meeting'|'test-drive';start:string;end:string;timeZone:string;status:'scheduled'|'cancelled'|'completed';notes:string;outcome:string;vehicle:string|null;enquiry:string|null;customer:string|null};
 export type Task={_id:string;__v:number;title:string;dueAt:string;timeZone:string;status:'open'|'in-progress'|'done'|'cancelled';notes:string;vehicle:string|null;enquiry:string|null;appointment:string|null};
 export type Mail={_id:string;appointment:string;appointmentVersion:number;recipient:string;messageId?:string;subject:string;text:string;state:'queued'|'sending'|'provider-accepted'|'failed'|'unknown';failure:string;attempts:number;createdAt:string;acceptedAt:string|null};
 export type Options={vehicles:{_id:string;title:string}[];enquiries:{_id:string;vehicleTitle:string;buyer:{name:string}|null;car:string}[];appointments:{_id:string;title:string}[];truncated:boolean;mailAvailable:boolean};
@@ -22,7 +22,7 @@ export function Dialog({title,close,children}:{title:string;close:()=>void;child
     dialog?.showModal();
     return ()=>{dialog?.close();if(trigger instanceof HTMLElement&&trigger.isConnected)trigger.focus({preventScroll:true});else document.getElementById('workspace-content')?.focus({preventScroll:true});};
   },[]);
-  return <dialog ref={ref} className={styles.dialog} aria-label={title} onClose={close}>
+  return <dialog ref={ref} className={styles.dialog} aria-label={title} onClose={()=>{if(!ref.current?.open)close();}}>
     <header className={styles.dialogHeader}><h2>{title}</h2><button type='button' onClick={()=>ref.current?.close()} aria-label='Close editor'>Close</button></header>{children}
   </dialog>;
 }

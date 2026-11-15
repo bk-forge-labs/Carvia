@@ -1,5 +1,13 @@
 export type Car = {
+  testDriveAvailable?: boolean;
+  testDriveEligible?: boolean;
+  soldAt?: string | null;
+  __v?:number;
+  conditionReport?:string;
+  disclosedCharges?:string;
+  photoCategories?:{url:string;category:'exterior'|'interior'|'condition'|'unclassified'}[];
   isDemo?: boolean;
+  isUnavailable?:boolean;
   sellerName?: string;
   imageCredit?: {source:string;author:string;license:string;licenseUrl:string};
   _id: string;

@@ -40,7 +40,9 @@ app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/cars', require('./routes/carPublicRoutes'));
 app.use('/api/dealer/cars', require('./routes/carDealerRoutes'));
 app.use('/api/favorites', require('./routes/favoriteRoutes'));
+app.use('/api/buyer/decisions', require('./routes/buyerDecisionRoutes'));
 app.use('/api/enquiries', require('./routes/enquiryRoutes'));
+app.use('/api/test-drives', require('./routes/testDriveRoutes'));
 app.use('/api/workspace', require('./routes/workspaceRoutes'));
 
 //Test route

@@ -6,5 +6,6 @@ router.use(protect);
 router.post('/',authorize('buyer'),controller.create);
 router.get('/summary',authorize('dealer'),controller.summary);
 router.get('/',authorize('buyer','dealer'),controller.list);
+router.post('/:id/replies',authorize('buyer','dealer'),controller.reply);
 router.patch('/:id',authorize('dealer'),controller.update);
 module.exports = router;

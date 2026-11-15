@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import GuidedDiscovery from '@/components/cars/GuidedDiscovery';
+import BrowsePosition from '@/components/cars/BrowsePosition';
 import CarCard from '@/components/cars/CarCard';
 import ResultsFilterPanel from '@/components/cars/ResultsFilterPanel';
 import VehicleFilters from '@/components/cars/VehicleFilters';
@@ -22,6 +24,7 @@ export default async function CarsPage({ searchParams }: { searchParams?: Promis
   return <><main id='carvia-home' className={styles.page}><div className={styles.inner}>
     <nav className={styles.breadcrumb} aria-label='Breadcrumb'><Link href='/'>Veltrenne</Link><span aria-hidden='true'>/</span><span>Explore cars</span></nav>
     <header className={styles.heading}><p className={styles.eyebrow}>The Veltrenne collection</p><h1>{params.brand ? `Explore ${params.brand}.` : 'Find your next chapter.'}</h1><p>Consider the details. Discover the car that fits your life.</p></header>
+    <BrowsePosition query={contextQuery.toString()}/><Link href='/buyer/favorites'>Open your shortlist ↗</Link><GuidedDiscovery key={contextQuery.toString()} initial={Object.fromEntries(Object.entries(params).filter((entry):entry is [string,string]=>typeof entry[1]==='string'))}/>
     <ResultsFilterPanel active={Object.entries(params).filter(([k,v])=>v&&k!=='sort'&&k!=='page').length}><VehicleFilters key={contextQuery.toString()} initial={Object.fromEntries(Object.entries(params).filter(([k])=>k!=='page'))} brands={brands}/></ResultsFilterPanel>
     <div className={styles.summary}><p><strong>{pagination.totalCars.toLocaleString('en-GB')}</strong> {pagination.totalCars === 1 ? 'vehicle listing' : 'vehicle listings'}{hasFilters ? ' matching your search' : ''}</p>{hasFilters && <Link href='/cars'>Clear filters ×</Link>}</div>
     {cars.length ? <section className={styles.grid} aria-label='Available cars'>{cars.map(car => <CarCard key={car._id} car={car} searchQuery={contextQuery.toString()} />)}</section> : <section className={styles.empty}><p className={styles.eyebrow}>Room for a new possibility</p><h2>{pagination.totalCars > 0 ? 'You’ve reached the end of these results.' : hasFilters ? 'A different search. A new possibility.' : 'The collection is taking shape.'}</h2><p>{pagination.totalCars > 0 ? 'Return to the first page to explore matching cars.' : hasFilters ? 'No cars match these filters right now. Try another make or widen your budget.' : 'There are no vehicle listings right now. New listings will appear here when they are ready.'}</p><Link href={pagination.totalCars > 0 ? pageHref(1) : hasFilters ? '/cars' : '/'}>{pagination.totalCars > 0 ? 'Back to first page' : hasFilters ? 'Explore all cars' : 'Back to Veltrenne'} <span aria-hidden='true'>↗</span></Link></section>}

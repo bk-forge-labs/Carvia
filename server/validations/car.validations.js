@@ -1,6 +1,9 @@
 const { z } = require('zod');
 
 const createCarSchema = z.object({
+  testDriveAvailable: z.boolean().optional(),
+  conditionReport:z.string().trim().max(3000).optional(),
+  disclosedCharges:z.string().trim().max(2000).optional(),
   title: z.string().trim().min(3, 'Title must be at least 3 characters'),
   price: z.number().positive('Price must be positive'),
   brand: z.string().trim().min(1, 'Brand is required'),
@@ -25,6 +28,9 @@ const createCarSchema = z.object({
 
 const updateCarSchema = z
   .object({
+    testDriveAvailable: z.boolean().optional(),
+  conditionReport:z.string().trim().max(3000).optional(),
+  disclosedCharges:z.string().trim().max(2000).optional(),
     title: z
       .string()
       .trim()

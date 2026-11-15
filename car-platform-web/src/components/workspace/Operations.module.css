@@ -3,3 +3,5 @@
 @container workspace (max-width:600px){.month{gap:3px}.day{padding:6px!important;min-height:68px!important}.day span{font-size:10px}.day .eventTitle{display:none}.weekday{font-size:10px}.toolbar{gap:8px}.card,.notice{padding:18px}.toolbar label{flex-wrap:wrap}}
 @media(max-width:600px){.dialog{padding:18px}.fields{grid-template-columns:1fr}.dialogHeader{gap:12px}.dialogHeader h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){.page *,.dialog *{scroll-behavior:auto}}
+
+.conversation{display:grid;gap:20px;margin-top:16px}.conversation h3{font-size:17px;font-weight:500;margin:0}.conversation article{border-top:1px solid #ffffff24;padding-top:18px}.conversation article button{margin:12px 10px 0 0}.conversation time{display:block;color:#b5b4ad;font-size:12px;margin-top:8px}

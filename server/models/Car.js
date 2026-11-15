@@ -9,6 +9,13 @@ const carSchema = new mongoose.Schema(
     importBatch: {type:String,index:true},
     imageCredit: {source:String,author:String,license:String,licenseUrl:String},
     isDemo: { type: Boolean, default: false },
+    // No default: legacy listings remain unavailable until explicitly selected.
+    testDriveAvailable: { type: Boolean },
+    soldAt: {type:Date,default:null},
+    conditionReport: {type:String,maxlength:3000},
+    disclosedCharges: {type:String,maxlength:2000},
+    photoCategories: [{url:String,category:{type:String,enum:['exterior','interior','condition','unclassified']}}],
+    requestRevision: {type:Number,default:0,select:false},
     exteriorColor: {type:String, enum:['', ...require('../utils/vehicleSearch').colors]},
     seats: {type:Number,min:1,max:9,validate: {validator:v=>v==null||Number.isInteger(v)}},
     doors: {type:Number,min:1,max:6,validate: {validator:v=>v==null||Number.isInteger(v)}},

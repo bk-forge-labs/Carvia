@@ -51,6 +51,7 @@ function AppointmentEditor({record,day,zone,options,seedEnquiry,seedTask,close,s
     } catch(err) {setError(err instanceof Error?err.message:'Email status could not be confirmed. Check email history before retrying.');}
     finally {setBusy(false);}
   }
+  if(record?.buyerRequest)return <Dialog title='Buyer appointment' close={close}><p>{record.title}</p><p>Status: {record.status}</p><p>Manage confirmation, rescheduling and the buyer-visible outcome in the connected conversation.</p><Link href={'/dealer/enquiries?enquiry='+record.enquiry}>Open buyer conversation</Link></Dialog>;
   return <Dialog title={record?'Appointment details':'New appointment'} close={close}>
     <form className={styles.form} onSubmit={submit}>
       {seedTask&&!record&&<p className={styles.muted}>Saving will also link this appointment to the follow-up task you opened.</p>}

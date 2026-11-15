@@ -1,4 +1,5 @@
 'use client';
+import PhotoLabels from './PhotoLabels';
 import {useRef,useState} from 'react';
 import Link from 'next/link';
 import type {Car} from '@/types/car';
@@ -53,6 +54,7 @@ export default function DealerCarImagesManager({car,onImagesUpdated}:{car:Car;on
       <p className={styles.small}>JPG, PNG or WebP · Up to 5 MB each · 8 photos maximum</p>
     </section>
     <div className={styles.messages}><p role="status">{busy||notice}</p>{error&&<p role="alert" className={shared.error}>{error}</p>}</div>
+    <PhotoLabels key={images.join()} id={car._id}/>
     <div className={styles.galleryHeading}><h2>Your gallery</h2><span>{images.length} / 8 photos</span></div>
     {!images.length?<div className={styles.empty}><h3>The first photo sets the scene.</h3><p>Add a clear exterior view to start. Your first upload becomes the cover; you can change it anytime.</p></div>:<ol className={styles.grid}>
       {images.map((url,index)=><li className={styles.card} key={url} data-cover={cover===url}>

@@ -7,6 +7,9 @@ type UpdateDealerCarInput = {
   brand: string;
   model: string;
   bodyStyle?: string;
+  testDriveAvailable?: boolean;
+  conditionReport?:string;
+  disclosedCharges?:string;
   fuelType?: string;
   exteriorColor?: string;
   seats?: number | null;
@@ -28,6 +31,9 @@ type CreateDealerCarInput = {
   mileage: number;
   model: string;
   bodyStyle?: string;
+  testDriveAvailable?: boolean;
+  conditionReport?:string;
+  disclosedCharges?:string;
   fuelType?: string;
   exteriorColor?: string;
   seats?: number | null;

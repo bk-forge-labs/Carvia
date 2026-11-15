@@ -89,7 +89,7 @@ exports.getCarsPublic = async (req, res) => {
         .skip(skip)
         .limit(limit)
         .select(
-          'title price mainImage images brand model bodyStyle year mileage fuelType transmission location exteriorColor seats doors owner condition createdAt dealer isDemo'
+          'title price mainImage images brand model bodyStyle year mileage fuelType transmission location exteriorColor seats doors owner condition createdAt dealer isDemo testDriveAvailable'
         ).populate('dealer', 'name'),
     ]);
     const profiles = await DealerProfile.find({user: {$in: cars.map(car => car.dealer?._id).filter(Boolean)}}).select('user companyName').lean();
@@ -179,11 +179,11 @@ exports.getCarByIdPublic = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(4)
       .select(
-        'title price mainImage images brand model bodyStyle year mileage fuelType transmission location exteriorColor seats doors owner condition createdAt dealer isDemo'
+        'title price mainImage images brand model bodyStyle year mileage fuelType transmission location exteriorColor seats doors owner condition createdAt dealer isDemo testDriveAvailable'
       );
     return res.status(200).json({
       success: true,
-      data: car,
+      data: {...car.toObject(),testDriveEligible:require('../services/testDriveEligibility').testDriveEligibility(car,await DealerProfile.findOne({user:car.dealer?._id,status:'approved'}).select('status')).eligible},
       dealerProfile,
       similarCars,
     });
@@ -325,6 +325,9 @@ exports.publishMyCar = async (req,res) => {
     const car = await mongoose.connection.transaction(async session => {
       const seller = await DealerProfile.findOneAndUpdate({user:req.user.id,status:'approved'},{$inc:{publicationVersion:1}},{new:true,session});
       if (!seller) throw new AppError('Only approved dealers can publish vehicles.',403);
+      const candidate = await Car.findOne({_id:req.params.id,dealer:req.user.id}).session(session);
+      if (!candidate) throw new AppError('Vehicle not found.',404);
+      if (typeof candidate.testDriveAvailable !== 'boolean') throw new AppError('Choose whether this vehicle is available for test drives before publishing.',400);
       const updated = await Car.findOneAndUpdate({_id:req.params.id,dealer:req.user.id},{$set:{isPublished:true}},{new:true,runValidators:true,session});
       if (!updated) throw new AppError('Car not found (or you do not own it).',404);
       if (!updated.isPublished) throw new AppError('This vehicle requires another review before publication.',409);
@@ -384,6 +387,7 @@ exports.updateMyCar = async (req, res) => {
       'brand',
       'model',
       'bodyStyle',
+      'testDriveAvailable', 'conditionReport', 'disclosedCharges',
       'year',
       'mileage',
       'owner',
@@ -641,6 +645,7 @@ exports.getMyCarReadiness = async (req, res) => {
     if (!car) return res.status(404).json({success:false,message:'Vehicle not found.'});
     const seller = await DealerProfile.findOne({user:req.user.id});
     const issues = require('../utils/publicationQuality').publicationIssues(car);
+    if (typeof car.testDriveAvailable !== 'boolean') issues.unshift('Choose whether this vehicle is available for test drives before publishing.');
     if (!seller || seller.status !== 'approved') issues.unshift('Your dealership must be approved before publishing.');
     return res.json({success:true,data:{ready:issues.length===0,issues}});
   } catch(error) {

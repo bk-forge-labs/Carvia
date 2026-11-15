@@ -27,12 +27,13 @@ exports.create = asyncHandler(async (req,res) => {
 exports.list = asyncHandler(async (req,res) => {
   res.set('Cache-Control','no-store');
   const page = Math.max(1,Math.min(10000,parseInt(req.query.page,10)||1));
-  const filter = scope(req.user);
+  const filter = {...scope(req.user),...(validId(req.query.enquiry)?{_id:req.query.enquiry}:{}),...(validId(req.query.vehicle)?{car:req.query.vehicle}:{})};
   const [records,total] = await Promise.all([
-    Enquiry.find(filter).sort({createdAt:-1,_id:-1}).skip((page-1)*20).limit(20).populate('buyer','name email').populate('car','isPublished publicationHold').lean(),
+    Enquiry.find(filter).sort({createdAt:-1,_id:-1}).skip((page-1)*20).limit(20).populate('buyer','name email').populate('car','isPublished publicationHold testDriveAvailable isDemo soldAt').lean(),
     Enquiry.countDocuments(filter)
   ]);
-  const data = records.map(e => ({id:String(e._id),carId:e.car?String(e.car._id):null,available:!!e.car?.isPublished&&!e.car?.publicationHold,vehicleTitle:e.vehicleTitle,dealerName:e.dealerName,message:e.message,status:e.status,createdAt:e.createdAt,updatedAt:e.updatedAt,...(req.user.role==='dealer'?{buyerName:e.buyer?.name||'Account unavailable',buyerEmail:e.buyer?.email||null}:{})}));
+  const approvedDealers=new Set((await DealerProfile.find({user:{$in:records.map(e=>e.dealer)},status:'approved'}).select('user').lean()).map(d=>String(d.user)));
+  const data = records.map(e => ({id:String(e._id),carId:e.car?String(e.car._id):null,available:!!e.car?.isPublished&&!e.car?.publicationHold,testDriveEligible:approvedDealers.has(String(e.dealer))&&!!e.car?.isPublished&&!e.car?.publicationHold&&!e.car?.isDemo&&!e.car?.soldAt&&e.car?.testDriveAvailable===true,vehicleTitle:e.vehicleTitle,dealerName:e.dealerName,message:e.message,replies:(e.replies||[]).map(r=>({id:String(r._id),role:r.role,text:r.text,at:r.at})),status:e.status,createdAt:e.createdAt,updatedAt:e.updatedAt,...(req.user.role==='dealer'?{buyerName:e.buyer?.name||'Account unavailable',buyerEmail:e.buyer?.email||null}:{})}));
   res.json({data,total,page,pages:Math.ceil(total/20)});
 });
 exports.update = asyncHandler(async (req,res) => {
@@ -49,5 +50,20 @@ exports.update = asyncHandler(async (req,res) => {
 exports.summary = asyncHandler(async (req,res) => {
   res.set('Cache-Control','no-store');
   const newCount = await Enquiry.countDocuments({...scope(req.user),status:'new'});
-  res.json({newCount});
+  const unansweredCount=await Enquiry.countDocuments({...scope(req.user),status:{$ne:'closed'},$expr:{$ne:[{$arrayElemAt:['$replies.role',-1]},'dealer']}});
+  res.json({newCount,unansweredCount});
+});
+
+exports.reply = asyncHandler(async(req,res)=>{
+  const {z}=require('zod');
+  const parsed=z.object({requestKey:z.string().uuid(),text:z.string().trim().min(1).max(1500)}).strict().safeParse(req.body);
+  if(!validId(req.params.id)||!parsed.success)throw new AppError('Enter a valid reply and submission key.',400);
+  const filter={_id:req.params.id,...scope(req.user)};
+  const existing=await Enquiry.findOne(filter);
+  if(!existing)throw new AppError('Enquiry not found.',404);
+  const prior=(existing.replies||[]).find(r=>r.requestKey===parsed.data.requestKey);
+  if(prior){if(String(prior.author)!==req.user.id||prior.text!==parsed.data.text)throw new AppError('This submission key was already used.',409);return res.json({saved:true});}
+  const record=await Enquiry.findOneAndUpdate({...filter,'replies.requestKey':{$ne:parsed.data.requestKey},'replies.199':{$exists:false}},{$push:{replies:{...parsed.data,author:req.user.id,role:req.user.role,at:new Date()}},$set:{status:req.user.role==='dealer'?'contacted':'new'}},{returnDocument:'after',runValidators:true});
+  if(!record)throw new AppError('The conversation changed or reached its reply limit. Reload before retrying.',409);
+  res.status(201).json({saved:true});
 });

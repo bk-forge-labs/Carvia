@@ -1,0 +1,80 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const mongoose=require('mongoose'),express=require('express'),cookieParser=require('cookie-parser'),jwt=require('jsonwebtoken');
+const {randomUUID}=require('node:crypto'),{once}=require('node:events');
+const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+const uri=process.env.VELTRENNE_BUYER_TEST_MONGO_URI;
+test('isolated buyer decision privacy, replies, eligibility and connected appointment transitions',{skip:!uri},async()=>{
+ assert.match(uri,/^mongodb:\/\/127\.0\.0\.1:\d+\/veltrenne_buyer_test(?:\?|$)/);
+ const previous={...process.env};let server;const dir=await fs.mkdtemp(path.join(os.tmpdir(),'veltrenne-buyer-'));
+ try{
+ process.env.UPLOAD_DIR=dir;process.env.NODE_ENV='test';process.env.JWT_SECRET='buyer-isolated-test-secret';
+ await mongoose.connect(uri);await mongoose.connection.dropDatabase();
+ const routes=require('../routes/testDriveRoutes'),decisions=require('../routes/buyerDecisionRoutes'),enquiries=require('../routes/enquiryRoutes');
+ const User=require('../models/User'),Car=require('../models/Car'),Profile=require('../models/DealerProfile'),Enquiry=require('../models/Enquiry'),Appointment=require('../models/Appointment');
+ await Promise.all(Object.values(mongoose.models).map(m=>m.init()));
+ const users={};for(const role of ['buyer','other','dealer','admin'])users[role]=await User.create({name:role,email:role+'@example.invalid',password:'disposable QA password',role:role==='other'?'buyer':role});
+ await Profile.create({user:users.dealer._id,companyName:'QA',phone:'0000',status:'approved'});
+ await fs.writeFile(path.join(dir,'car.jpg'),'synthetic file for API test');
+ const car=await Car.create({dealer:users.dealer._id,title:'BMW i4',brand:'BMW',model:'i4',price:30000,year:2024,mileage:1,images:['/uploads/car.jpg'],mainImage:'/uploads/car.jpg',isPublished:true,testDriveAvailable:true});
+ await User.updateOne({_id:users.buyer._id},{$addToSet:{favorites:car._id}});
+ const enquiry=await Enquiry.create({buyer:users.buyer._id,dealer:users.dealer._id,car:car._id,vehicleTitle:car.title,dealerName:'QA',message:'Please answer my question about this vehicle.'});
+ const app=express();app.use(express.json(),cookieParser());app.use('/requests',routes);app.use('/decisions',decisions);app.use('/enquiries',enquiries);app.use(require('../middleware/errorMiddleware').errorHandler);
+ server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ async function call(role,url,method='GET',body){const r=await fetch('http://127.0.0.1:'+server.address().port+url,{method,headers:{'Content-Type':'application/json',...(role?{Cookie:'access_token='+jwt.sign({id:String(users[role]._id)},process.env.JWT_SECRET)}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,body:await r.json()};}
+ assert.equal((await call('dealer','/decisions')).status,403);
+ const note={note:'Private concern',question:'Has it been repaired?',expectedVersion:null};
+ assert.equal((await call('buyer','/decisions/'+car.id,'PUT',note)).status,200);
+ assert.equal((await call('other','/decisions')).body.data.length,0);
+ assert.equal((await call('other','/decisions?vehicles='+car.id)).body.data.length,0);
+ assert.equal((await call('buyer','/decisions?vehicles='+car.id)).body.data[0].note,'Private concern');
+ assert.equal((await call('buyer','/decisions?vehicles=invalid')).status,400);
+ assert.equal((await call('other','/decisions/'+car.id,'PUT',note)).status,404);
+ assert.equal((await call('buyer','/decisions/'+car.id,'PUT',note)).status,409);
+ const reply={requestKey:randomUUID(),text:'Dealer answer supplied for this test.'};
+ assert.equal((await call('other','/enquiries/'+enquiry.id+'/replies','POST',reply)).status,404);
+ assert.equal((await call('dealer','/enquiries/'+enquiry.id+'/replies','POST',reply)).status,201);
+ assert.equal((await call('dealer','/enquiries/'+enquiry.id+'/replies','POST',reply)).status,200);
+ assert.equal((await call('buyer','/enquiries')).body.data[0].replies.length,1);
+ assert.equal((await call('dealer','/enquiries/summary')).body.unansweredCount,0);
+ assert.equal((await call('buyer','/enquiries/'+enquiry.id+'/replies','POST',{requestKey:randomUUID(),text:'Thank you. Can we arrange a test drive?'})).status,201);
+ assert.equal((await call('dealer','/enquiries/summary')).body.unansweredCount,1);
+ const input={enquiry:enquiry.id,requestKey:randomUUID(),message:'Please arrange a viewing.',startLocal:'2028-04-03T10:00',endLocal:'2028-04-03T11:00',timeZone:'Europe/Berlin'};
+ const created=await call('buyer','/requests','POST',input);assert.equal(created.status,201,JSON.stringify(created.body));let a=created.body.data;assert.equal(a.status,'requested');assert.equal('notes' in a,false);
+ assert.equal((await call('buyer','/requests','POST',input)).body.data.id,a.id);
+ assert.equal((await call('buyer','/requests','POST',{...input,requestKey:randomUUID()})).status,409);
+ assert.equal((await call('other','/requests')).body.data.length,0);assert.equal((await call('admin','/requests')).status,403);
+ const {enquiry:ignore,requestKey:key,message,...timing}=input;
+ async function act(role,action,extra={}){return call(role,'/requests/'+a.id,'PUT',{...timing,action,expectedVersion:a.version,...extra});}
+ assert.equal((await act('buyer','confirm')).status,409);
+ let r=await act('dealer','confirm');assert.equal(r.status,200);a=r.body.data;
+ await Car.updateOne({_id:car._id},{$set:{testDriveAvailable:false}});
+ assert.equal((await Appointment.findById(a.id)).status,'scheduled');
+ r=await act('dealer','propose-reschedule',{startLocal:'2028-04-04T10:00',endLocal:'2028-04-04T11:00'});assert.equal(r.status,200);a=r.body.data;
+ assert.equal(a.reservedStart,'2028-04-03T08:00:00.000Z');
+ r=await act('buyer','accept-reschedule');assert.equal(r.status,200);a=r.body.data;
+ r=await act('dealer','complete',{update:'Viewing completed; buyer requested a quote.'});assert.equal(r.status,200);a=r.body.data;
+ assert.match(a.outcome,/Viewing completed/);assert.equal((await act('buyer','cancel')).status,409);
+ assert.equal((await call('buyer','/requests','POST',{...input,requestKey:randomUUID()})).status,409);
+ await Car.updateOne({_id:car._id},{$set:{testDriveAvailable:true}});
+ let next=await call('buyer','/requests','POST',{...input,requestKey:randomUUID()});assert.equal(next.status,201);a=next.body.data;
+ r=await act('dealer','decline',{update:'The proposed time cannot be accommodated.'});assert.equal(r.status,200);a=r.body.data;assert.equal(a.status,'declined');assert.equal((await act('dealer','confirm')).status,409);
+ next=await call('buyer','/requests','POST',{...input,requestKey:randomUUID()});assert.equal(next.status,201);a=next.body.data;
+ assert.equal((await act('dealer','confirm',{expectedVersion:99})).status,409);
+ assert.equal((await act('other','cancel')).status,404);
+ r=await act('buyer','cancel');assert.equal(r.status,200);assert.equal(r.body.data.status,'cancelled');
+ assert.equal((await call('buyer','/requests','POST',{...input,requestKey:randomUUID(),startLocal:'2028-03-26T02:30',endLocal:'2028-03-26T04:00'})).status,400);
+ await Appointment.create({owner:users.dealer._id,ownerRole:'dealer',requestKey:randomUUID(),title:'Private calendar event',type:'meeting',start:new Date('2028-04-03T08:00Z'),end:new Date('2028-04-03T09:00Z'),timeZone:'Europe/Berlin',notes:'Private competing booking'});
+ const conflict=await call('buyer','/requests','POST',{...input,requestKey:randomUUID()});assert.equal(conflict.status,409);assert.equal(JSON.stringify(conflict.body).includes('Private calendar event'),false);
+
+ // Persisted sold status is rejected, not merely a mocked eligibility property.
+ await Car.updateOne({_id:car._id},{$set:{soldAt:new Date()}});
+ assert.equal((await call('buyer','/requests','POST',{...input,requestKey:randomUUID(),startLocal:'2028-04-05T10:00',endLocal:'2028-04-05T11:00'})).status,409);
+ await Car.updateOne({_id:car._id},{$set:{soldAt:null}});
+ const otherEnquiry=await Enquiry.create({buyer:users.other._id,dealer:users.dealer._id,car:car._id,vehicleTitle:car.title,dealerName:'QA',message:'A separate buyer requests the same slot.'});
+ const slot={...input,startLocal:'2028-04-05T10:00',endLocal:'2028-04-05T11:00'};
+ const competing=await Promise.all([call('buyer','/requests','POST',{...slot,requestKey:randomUUID()}),call('other','/requests','POST',{...slot,enquiry:otherEnquiry.id,requestKey:randomUUID()})]);
+ assert.deepEqual(competing.map(r=>r.status),[201,201]);
+ const confirmations=await Promise.all(competing.map(r=>call('dealer','/requests/'+r.body.data.id,'PUT',{...timing,action:'confirm',expectedVersion:r.body.data.version})));
+ assert.deepEqual(confirmations.map(r=>r.status).sort(),[200,409]);
+ }finally{if(server)await new Promise(r=>server.close(r));if(mongoose.connection.readyState===1)await mongoose.connection.dropDatabase();await mongoose.disconnect();await fs.rm(dir,{recursive:true,force:true});for(const k of Object.keys(process.env))if(!(k in previous))delete process.env[k];Object.assign(process.env,previous);}
+});

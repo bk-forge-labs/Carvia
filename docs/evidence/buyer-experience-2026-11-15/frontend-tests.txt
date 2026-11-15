@@ -1,0 +1,15 @@
+✔ dealer listing destinations survive sign-in (0.923916ms)
+✔ external and unrecognised destinations are rejected (0.089041ms)
+✔ buyer destinations and enquiry anchor stay supported (0.090333ms)
+✔ known administrator destinations survive sign-in without allowing arbitrary admin paths (0.136666ms)
+✔ connected workspace destinations survive sign-in (0.089375ms)
+✔ calendar weeks are Monday first across year boundaries and months include leap day (3.354083ms)
+✔ editing an existing repeated-hour appointment preserves its occurrence (22.524084ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 225.46825

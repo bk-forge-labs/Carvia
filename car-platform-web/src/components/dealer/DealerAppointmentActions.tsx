@@ -1,0 +1,7 @@
+'use client';
+import Link from 'next/link';
+import {useQuery} from '@tanstack/react-query';
+import {api} from '@/lib/api/browser';
+import {useAuth} from '@/lib/store/auth';
+import s from './DealerCommandCenter.module.css';
+export default function DealerAppointmentActions(){const user=useAuth(s=>s.user);const query=useQuery({queryKey:['dealer-appointments-summary',user?.id],queryFn:({signal})=>api<{pending:number;upcoming:number;data:{id:string;enquiry:string;title:string;status:string;start:string;timeZone:string}[]}>('/test-drives/summary',{signal}),enabled:user?.role==='dealer',retry:false,gcTime:0,refetchInterval:30000});return <section className={s.panel}><h2>Appointments needing attention.</h2>{query.isPending?<p role='status'>Loading appointments…</p>:query.isError?<div role='alert'><p>Appointments could not load.</p><button onClick={()=>void query.refetch()}>Retry</button></div>:<><p>{query.data.pending} pending requests · {query.data.upcoming} upcoming confirmed appointments</p>{query.data.data.length?<ul>{query.data.data.map(a=><li key={a.id}><Link href={'/dealer/enquiries?enquiry='+a.enquiry}>{a.title} — {a.status.replaceAll('-',' ')} · {new Date(a.start).toLocaleString('en-GB',{timeZone:a.timeZone})} {a.timeZone}</Link></li>)}</ul>:<p>No pending commitments.</p>}<p>Turning off test-drive availability prevents new requests; manage existing commitments through the conversation.</p><Link href='/calendar'>Open calendar</Link></>}</section>;}

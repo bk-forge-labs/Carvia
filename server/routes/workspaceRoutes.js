@@ -13,8 +13,7 @@ const User = require('../models/User');
 const Profile = require('../models/DealerProfile');
 const {interval, resolveTime} = require('../services/workspaceTime');
 const mail = require('../services/workspaceMail');
-const lockSchema = new mongoose.Schema({_id: mongoose.Schema.Types.ObjectId, revision: {type:Number, default:0}});
-const Lock = mongoose.models.WorkspaceCalendarLock || mongoose.model('WorkspaceCalendarLock', lockSchema);
+const {withCalendarLock} = require('../services/calendarLock');
 const router = express.Router();
 const emailLimit=require('express-rate-limit').rateLimit({windowMs:60000,limit:10,keyGenerator:req=>req.user.id,standardHeaders:'draft-8',legacyHeaders:false,message:{message:'Too many confirmation requests. Wait a minute and check email history before retrying.'}});
 router.use(protect, authorize('dealer','admin'), (req,res,next) => {res.set('Cache-Control','no-store'); next();});
@@ -78,17 +77,10 @@ async function links(req, body) {
   }
   return {enquiry:enquiry?._id || null, vehicle, ...(enquiry ? {customer:enquiry.buyer} : {customer:null})};
 }
-async function serializeCalendar(req, operation) {
-  // Touch one owner lock in the transaction so concurrent conflict checks retry on a fresh snapshot.
-  try {await Lock.updateOne({_id:req.user.id},{$setOnInsert:{revision:0}},{upsert:true});}
-  catch(error) {if(error.code !== 11000) throw error;}
-  return mongoose.connection.transaction(async session => {
-    await Lock.updateOne({_id:req.user.id},{$inc:{revision:1}},{session});
-    return operation(session);
-  });
-}
+const serializeCalendar = (req,operation) => withCalendarLock(req.user.id,operation);
 async function saveAppointment(req, body, recordIdValue) {
   const prior = recordIdValue && await Appointment.findOne({_id:recordIdValue,...owned(req)});
+  if (prior?.buyerRequest) throw new AppError('Use the connected request actions to update this buyer appointment.',409);
   if (recordIdValue && !prior) throw new AppError('Appointment unavailable or outside your calendar.',404);
   if(prior && body.status!=='scheduled' && ['vehicle','enquiry'].some(field=>String(prior[field]||'')!==String(body[field]||''))) throw new AppError('Cancellation or completion keeps the original linked records. Save link changes separately first.',400);
   const linked = prior && body.status !== 'scheduled'
@@ -121,7 +113,7 @@ async function saveAppointment(req, body, recordIdValue) {
     }
     const status = body.status || 'scheduled';
     const conflicts = status === 'scheduled' ? await Appointment.find({
-      ...owned(req),status:'scheduled',start:{$lt:times.end},end:{$gt:times.start},
+      ...owned(req),...require('../services/calendarLock').overlap(times.start,times.end),
       ...(recordIdValue ? {_id:{$ne:recordIdValue}} : {}),
     }).select('title start end').session(session) : [];
     if (conflicts.length && !body.acceptConflicts) {
@@ -203,6 +195,8 @@ router.post('/appointments/:id/confirmation',emailLimit,route(async(req,res) => 
   if (body.retryFailed && body.expectedAttempts == null) throw new AppError('Refresh the email status before retrying.',400);
   const appointment = await Appointment.findOne({_id:recordId(req),...owned(req)});
   if (!appointment) throw new AppError('Appointment unavailable or outside your calendar.',404);
+  if (appointment.buyerRequest && !['scheduled','cancelled','completed'].includes(appointment.status)) throw new AppError('A pending or declined request is not a confirmed appointment.',409);
+  if (appointment.buyerRequest && !mail.localSink()) throw new AppError('Buyer-journey email is restricted to the local test sink until production sending is authorized.',403);
   if (appointment.__v !== body.expectedVersion) throw new AppError('The appointment changed. Reload before sending.',409);
   if (req.user.role !== 'dealer' || !await Profile.exists({user:req.user.id,status:'approved'})) throw new AppError('Confirmation email requires an approved dealer and a linked buyer enquiry.',403);
   if (!appointment.enquiry) throw new AppError('Link an authorized buyer enquiry before sending confirmation.',400);
@@ -218,7 +212,7 @@ router.post('/appointments/:id/confirmation',emailLimit,route(async(req,res) => 
   } else try {
     message = await Message.findOneAndUpdate(filter,{$setOnInsert:{
       recipient:customer.email,subject:`Veltrenne: ${appointment.status === 'cancelled' ? 'Cancelled' : appointment.status === 'completed' ? 'Outcome' : 'Appointment confirmation'} — ${appointment.title}`,
-      text:`Hello ${customer.name},\n\n${appointment.title}\nType: ${appointment.type==='test-drive'?'Test drive':'Meeting'}\nStatus: ${appointment.status}\nStart: ${date(appointment.start)}\nEnd: ${date(appointment.end)}\nTimezone: ${appointment.timeZone}\n${appointment.status==='completed' && appointment.outcome ? 'Outcome: '+appointment.outcome+'\n' : ''}\nPlease contact your dealer with any questions.\nVeltrenne`,
+      text:`Hello ${customer.name},\n\n${appointment.title}\nType: ${appointment.type==='test-drive'?'Test drive':'Meeting'}\nStatus: ${appointment.status}\nStart: ${date(appointment.start)}\nEnd: ${date(appointment.end)}\nTimezone: ${appointment.timeZone}\n${appointment.status==='completed' && (appointment.buyerRequest?appointment.publicOutcome:appointment.outcome) ? 'Outcome: '+(appointment.buyerRequest?appointment.publicOutcome:appointment.outcome)+'\n' : ''}\nPlease contact your dealer with any questions.\nVeltrenne`,
     }},{upsert:true,returnDocument:'after'});
   } catch(error) {if(error.code!==11000) throw error; message=await Message.findOne(filter);}
   if (body.retryFailed) await Message.updateOne({_id:message._id,state:'failed',attempts:body.expectedAttempts},{$set:{state:'queued',failure:''}});
