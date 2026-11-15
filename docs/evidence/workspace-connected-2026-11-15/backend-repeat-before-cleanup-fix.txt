@@ -1,0 +1,97 @@
+✔ account update validates names and rejects role or email changes (0.510167ms)
+✔ account update only targets authenticated user and returns safe fields (0.447666ms)
+✔ authentication rejects non-string query operators and invalid bodies (1.407958ms)
+✔ registration normalizes email and name without granting admin access (0.161916ms)
+✔ registration rejects invalid names and passwords beyond bcrypt byte limit (0.127917ms)
+✔ authentication limits repeated requests and supplies retry information (51.474583ms)
+✔ booking validation accepts the supported request before the controller runs (1.478291ms)
+✔ booking validation rejects missing fields with a client error (0.610125ms)
+✔ dealer profile exposes company name and status-specific feedback without moderator identity (0.969583ms)
+✔ dealer edits reject invalid draft numbers before writing (2.6785ms)
+✔ dealer edits trim description and preserve explicit zero mileage (0.461791ms)
+✔ dealer edits cannot write publication or ownership fields (0.089583ms)
+✔ local CORS defaults are preserved (1.15125ms)
+✔ production requires explicit HTTPS origin, storage and secret (0.203ms)
+✔ configured photo storage survives process restart and publication checks use it (118.060208ms)
+✔ enquiries validate vehicle identity and message before database access (0.958667ms)
+✔ inbox ownership always derives from authenticated identity (0.1035ms)
+✔ status changes require a known current state and valid destination (0.0955ms)
+✔ rejects invalid vehicle IDs without writes (0.599834ms)
+✔ saving unavailable inventory is rejected (0.136458ms)
+✔ save uses atomic set membership on authenticated user only (0.446125ms)
+✔ removal works even after a listing disappears and never toggles (0.088542ms)
+✔ missing user is not reported as success (0.071ms)
+✔ database errors do not expose internal details (0.143375ms)
+✔ photo signatures reject mislabeled markup and accept the supported headers (0.451291ms)
+✔ review input requires timestamp and meaningful bounded note (1.383875ms)
+✔ all release confirmations are required before database access (0.243333ms)
+✔ stale dealer cannot be changed (0.215667ms)
+✔ illegal status transitions cannot be applied (0.110583ms)
+✔ suspension records the right action and withdraws stock within the transaction (0.15525ms)
+✔ unapproved seller cannot have a hold released (0.174542ms)
+✔ identity, price and photo changes invalidate a review and unpublish (0.9795ms)
+✔ unchanged reviewed record and unreviewed draft are preserved (1.893792ms)
+✔ dealer publication controller rejects unapproved sellers before writing a car (276.893542ms)
+✔ photo order accepts only an exact permutation and preserves cover (1.004584ms)
+✔ photo order rejects missing ownership without saving (0.103292ms)
+✔ over-capacity upload rejects entire batch and cleans new files (7.21175ms)
+✔ first upload selects cover and appends only submitted photos (0.216583ms)
+✔ complete record with a readable photograph passes structural checks (3.748667ms)
+✔ review hold cannot be bypassed by correcting a title (0.265792ms)
+✔ test titles and incorrect identity remain drafts (0.107042ms)
+✔ invalid prices, years and mileage cannot publish (0.112667ms)
+✔ missing, unselected, external and traversing images cannot publish (0.096791ms)
+✔ incomplete drafts remain editable (0.104125ms)
+✔ published incomplete records are rejected with an actionable client error (0.277417ms)
+✔ readiness exposes missing fields, photos and review holds (0.758791ms)
+✔ readiness includes dealer approval and does not release holds (0.157458ms)
+✔ readiness does not reveal vehicles belonging to another dealer (0.0875ms)
+✖ isolated database: publication conflict, dealer re-review, single-use recovery, cleanup (124.78525ms)
+✔ image validation rejects truncated files even with genuine magic headers (4.718958ms)
+✔ images decode, lose metadata and reject a mismatched declared format (3.620625ms)
+✔ vehicle technical fields survive create and update validation (3.166542ms)
+✔ dealer read and write serializer never exposes internal review material (0.121541ms)
+✔ production inventory excludes samples without removing local records (0.088209ms)
+✔ new passwords enforce a byte limit and token digests do not store bearer secrets (0.338166ms)
+✔ combined filters constrain fields and colour choices use OR (1.002792ms)
+✔ bad ranges, arrays, nested operators and invalid specifications are rejected (0.357667ms)
+✔ dealer specifications validate without making unknown values required (1.833916ms)
+✔ unknown new details preserve existing approval fingerprint; confirmed edits change it (0.349416ms)
+✔ calendar rejects impossible dates, spring gaps and invalid zones (14.772167ms)
+✔ calendar requires explicit repeated-hour choice and stores distinct UTC instants (1.713875ms)
+✔ calendar handles quarter-hour zones and day/year boundaries (0.771125ms)
+✔ appointment intervals compare instants across DST and reject reversed or excessive durations (2.527458ms)
+✔ local mail sink cannot disable TLS in production or for non-loopback hosts (30.369ms)
+Verified workspace role boundaries, conflict serialization, stale edits, task persistence, cancellation/outcome and real local SMTP acceptance/failure/deduplication.
+✔ isolated workspace: permissions, persistence, concurrency, workflow and SMTP deduplication (927.146792ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 64
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1510.299917
+
+✖ failing tests:
+
+test at tests/review-fixes.integration.test.js:8:1
+✖ isolated database: publication conflict, dealer re-review, single-use recovery, cleanup (124.78525ms)
+  Error [MongoServerError]: E11000 duplicate key error collection: veltrenne_review_test.users index: email_1 dup key: { email: "review-dealer@example.invalid" }
+      at InsertOneOperation.handleOk (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongodb/lib/operations/insert.js:55:19)
+      at executeOperationWithRetries (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongodb/lib/operations/execute_operation.js:218:34)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async executeOperation (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongodb/lib/operations/execute_operation.js:85:16)
+      at async Collection.insertOne (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongodb/lib/collection.js:154:16)
+      at async model.$__save (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongoose/lib/model.js:435:16)
+      at async maybeTracedSave (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongoose/lib/model.js:676:7)
+      at async model.create (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/node_modules/mongoose/lib/model.js:2807:5)
+      at async TestContext.<anonymous> (/Users/basheerkattan/Developer/BK-CODE/car-platform/server/tests/review-fixes.integration.test.js:16:14)
+      at async Test.run (node:internal/test_runner/test:1389:7) {
+    errorLabelSet: Set(0) {},
+    errorResponse: { index: 0, code: 11000, errmsg: 'E11000 duplicate key error collection: veltrenne_review_test.users index: email_1 dup key: { email: "review-dealer@example.invalid" }', keyPattern: { email: 1 }, keyValue: { email: 'review-dealer@example.invalid' } },
+    index: 0,
+    code: 11000,
+    keyPattern: { email: 1 },
+    keyValue: { email: 'review-dealer@example.invalid' }
+  }

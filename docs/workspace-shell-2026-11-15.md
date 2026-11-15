@@ -1,5 +1,7 @@
 # Persistent dealer/admin workspace — 15 November 2026
 
+Current continuation: [connected workspace handoff](workspace-connected-2026-11-15.md), including local calendar/tasks/email implementation and outstanding verification/approval gates.
+
 Status: **Shared workspace expanded locally; verification evidence below. Not a completed operations suite or release approval.**
 
 The rollout update below supersedes the original milestone’s scope and delivery status. The original record is retained after it.
@@ -7,7 +9,7 @@ The rollout update below supersedes the original milestone’s scope and deliver
 ## Rollout update — local main after 096e547
 
 ### Baseline and boundaries
-Work started with a clean checkout at `167da19cf0a84d32b4d94a323454a65b73e7b708`, containing the imported and pushed shell commit `096e5471c4f1522fb648c8c064baf58895acaff5`. The earlier bundle-delivery limitation at the end of this document is historical: the bundle was subsequently imported and main pushed. This rollout's changes are local and uncommitted. No deployment, production configuration change, live customer mutation, database migration, dependency or product asset change was made.
+Work started with a clean checkout at `167da19cf0a84d32b4d94a323454a65b73e7b708`, containing the imported and pushed shell commit `096e5471c4f1522fb648c8c064baf58895acaff5`. The earlier bundle-delivery limitation at the end of this document is historical: the bundle was subsequently imported and main pushed. This rollout was subsequently preserved and committed locally as `94591a7` on `feat/veltrenne-connected-workspace`. No deployment, production configuration change, live customer mutation, database migration, dependency or product asset change was made.
 
 ### What changed
 - The persistent shell now derives navigation from the authenticated role across dealer, admin, buyer, account and bookings. Account and saved vehicles moved from the public route group into the dashboard route group without changing their URLs. Public marketplace layout, header and identity remain intact.

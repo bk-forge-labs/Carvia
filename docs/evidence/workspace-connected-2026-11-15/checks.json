@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-15",
+  "branch": "feat/veltrenne-connected-workspace",
+  "implementationCommits": [
+    "94591a7",
+    "33f2c35",
+    "0a032fc",
+    "440d110"
+  ],
+  "frontendTests": {
+    "passed": 7,
+    "failed": 0
+  },
+  "backendFullSuite": {
+    "passed": 65,
+    "failed": 0,
+    "skipped": 0
+  },
+  "existingWorkflowGroups": {
+    "passed": 11,
+    "failed": 0
+  },
+  "typescript": "passed",
+  "focusedLint": "passed",
+  "fullLint": {
+    "errors": 0,
+    "existingWarnings": 3
+  },
+  "productionBuild": {
+    "passed": true,
+    "staticPages": 37,
+    "environment": "isolated temporary copy; localhost API only",
+    "warning": "existing middleware convention deprecation"
+  },
+  "browser": {
+    "nativeObserved": [
+      "Disposable dealer sign-in returned to calendar",
+      "Month and week view inspected on desktop",
+      "Appointment editor and existing linked records inspected",
+      "Repeated confirmation click returned one accepted record",
+      "Created linked follow-up task and observed persisted list result",
+      "Expanded email history showed the saved message without private notes",
+      "Escape closed task editor"
+    ],
+    "renderObservations": 406,
+    "inconclusiveCases": [
+      162,
+      163,
+      164,
+      165
+    ],
+    "visualCoverageRemaining": [
+      "new-screen phone/tablet and intermediate-width visual inspection",
+      "Back/Forward and final mobile drawer/focus regression",
+      "new calendar create/reschedule/cancel/outcome controls through the browser"
+    ],
+    "accessFailure": [
+      "cgWindowNotFound",
+      "browser access host is unavailable"
+    ],
+    "approval": "new-screen composition pending owner response"
+  },
+  "noPush": true,
+  "noMerge": true,
+  "noDeployment": true,
+  "noProductionConfigChange": true,
+  "noRealCustomerEmail": true,
+  "fixtureCleanupRepeat": "passed 1/1 against the same disposable database after full 65/65 run",
+  "previewSeeder": "syntax checked and repeated successfully; existing fixtures preserved; no mail sent"
+}
