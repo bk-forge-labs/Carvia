@@ -1,3 +1,1 @@
-export default function Loading() {
-  return <div>Loading...</div>;
-}
+export {default} from '@/components/layout/WorkspaceLoading';

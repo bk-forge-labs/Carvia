@@ -10,3 +10,13 @@
 
 /* The approved horizontal asset already includes its emblem. */
 .sidebar .emblem,.mobileDialog .emblem{display:none}.shell[data-collapsed='true'] .sidebar .emblem{display:block}.brand{min-height:88px}.wordmark img{width:176px;max-width:100%}
+
+/* Nested screens respond to the space beside the persistent navigation. */
+.content{container:workspace / inline-size;overflow:visible}
+.transition>main{min-width:0;border-radius:inherit}
+.transition>main>div{min-width:0}
+.breadcrumb strong{white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.breadcrumb{flex-wrap:wrap}
+.search{min-width:44px}
+.navLink,.results a{overflow-wrap:anywhere}
+@media(max-width:480px){.topbar{flex-wrap:wrap}.breadcrumb{min-width:0}.account{margin-left:auto}.search{flex-shrink:0}}

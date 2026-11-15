@@ -1,6 +1,6 @@
 exports.validate = schema => (req, res, next) => {
   try {
-    const result = schema.saveParse({
+    const result = schema.safeParse({
       body: req.body,
       query: req.query,
       params: req.params,

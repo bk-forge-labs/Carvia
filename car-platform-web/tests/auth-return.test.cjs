@@ -20,7 +20,7 @@ test('external and unrecognised destinations are rejected', () => {
   assert.equal(safeReturnTo('/dealer' + String.fromCharCode(10)), null);
 });
 test('buyer destinations and enquiry anchor stay supported', () => {
-  for (const destination of ['/buyer/favorites', '/buyer/enquiries', '/account', '/cars/aaaaaaaaaaaaaaaaaaaaaaaa#vehicle-enquiry']) assert.equal(safeReturnTo(destination), destination);
+  for (const destination of ['/buyer', '/buyer/favorites', '/buyer/enquiries', '/account', '/bookings', '/bookings?status=pending', '/cars/aaaaaaaaaaaaaaaaaaaaaaaa#vehicle-enquiry']) assert.equal(safeReturnTo(destination), destination);
   assert.equal(safeReturnTo('/cars#unexpected'), '/cars');
 });
 

@@ -6,7 +6,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AccountMenu from '@/components/auth/AccountMenu';
 import EnquiryCount from '@/components/enquiries/EnquiryCount';
-import DashboardHeader from './DashboardHeader';
+import RequireAuth from '@/components/auth/RequireAuth';
+import {useAuth} from '@/lib/store/auth';
+import type {Role} from '@/lib/auth/types';
 import styles from './WorkspaceShell.module.css';
 
 type IconName = 'overview' | 'cars' | 'people' | 'mail' | 'settings' | 'arrow' | 'panel' | 'search' | 'close' | 'plus';
@@ -27,16 +29,18 @@ function Icon({name}: {name: IconName}) {
   return <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>{paths[name]}</svg>;
 }
 
+const workspaceRoles: Role[] = ['buyer', 'dealer', 'admin'];
+
 export default function WorkspaceShell({children}: {children: ReactNode}) {
   const path = usePathname();
-  const isAdmin = path === '/admin' || path.startsWith('/admin/');
-  const isDealer = path === '/dealer' || path.startsWith('/dealer/');
-  // Keep the public/buyer experience on its existing navigation and layout.
-  if (!isAdmin && !isDealer) return <><DashboardHeader/>{children}</>;
-  return <Workspace key={isAdmin ? 'admin' : 'dealer'} admin={isAdmin} path={path}>{children}</Workspace>;
+  const role = useAuth(state => state.user?.role);
+  return <RequireAuth allow={workspaceRoles}>{role && <Workspace key={role} role={role} path={path}>{children}</Workspace>}</RequireAuth>;
 }
 
-function Workspace({admin, path, children}: {admin: boolean; path: string; children: ReactNode}) {
+function Workspace({role, path, children}: {role: Role; path: string; children: ReactNode}) {
+  const admin = role === 'admin';
+  const dealer = role === 'dealer';
+  const workspaceLabel = admin ? 'Administration' : dealer ? 'Dealer workspace' : 'Your workspace';
   const [collapsed, setCollapsed] = useState(false);
   const [query, setQuery] = useState('');
   const navigation = useRef<HTMLDialogElement>(null);
@@ -44,6 +48,12 @@ function Workspace({admin, path, children}: {admin: boolean; path: string; child
   const mobileTrigger = useRef<HTMLButtonElement>(null);
   const searchTrigger = useRef<HTMLButtonElement>(null);
   const previousPath = useRef(path);
+  const searchInput = useRef<HTMLInputElement>(null);
+  function openSearch() {
+    setQuery('');
+    command.current?.showModal();
+    searchInput.current?.focus();
+  }
   useEffect(() => {
     if (previousPath.current !== path) {
       window.scrollTo({top: 0, behavior: 'instant'});
@@ -51,21 +61,27 @@ function Workspace({admin, path, children}: {admin: boolean; path: string; child
       previousPath.current = path;
     }
   }, [path]);
-  const root = admin ? '/admin' : '/dealer';
+  const root = admin ? '/admin' : dealer ? '/dealer' : '/buyer';
   const destinations: Destination[] = admin ? [
     {href: root, label: 'Overview', icon: 'overview', description: 'Your review queues at a glance'},
     {href: '/admin/dealers', label: 'Dealer reviews', icon: 'people', description: 'Applications, approvals and dealerships'},
     {href: '/admin/cars', label: 'Inventory review', icon: 'cars', description: 'Listing quality and publication holds'},
-  ] : [
+    {href: '/bookings', label: 'Bookings', icon: 'overview', description: 'Service booking records'},
+  ] : dealer ? [
     {href: root, label: 'Overview', icon: 'overview', description: 'Your showroom at a glance'},
     {href: '/dealer/cars', label: 'Inventory', icon: 'cars', description: 'Find, prepare and publish your vehicles'},
     {href: '/dealer/enquiries', label: 'Enquiries', icon: 'mail', description: 'Buyer conversations and follow-ups'},
+  ] : [
+    {href: root, label: 'Overview', icon: 'overview', description: 'Your saved vehicles and conversations'},
+    {href: '/buyer/favorites', label: 'Saved vehicles', icon: 'cars', description: 'Vehicles in your collection'},
+    {href: '/buyer/enquiries', label: 'Enquiries', icon: 'mail', description: 'Your conversations with sellers'},
+    {href: '/bookings', label: 'Bookings', icon: 'overview', description: 'Your service booking records'},
   ];
   const utilities: Destination[] = [
     {href: '/account', label: 'Account settings', icon: 'settings', description: 'Profile and account security'},
     {href: '/cars', label: 'Marketplace', icon: 'arrow', description: 'Explore the public vehicle collection'},
   ];
-  const active = destinations.find(item => item.href === root ? path === root : path === item.href || path.startsWith(item.href + '/'));
+  const active = [...destinations, ...utilities].find(item => item.href === root ? path === root : path === item.href || path.startsWith(item.href + '/'));
   const title = active?.label || (path.endsWith('/onboarding') ? 'Dealer application' : path.endsWith('/pending') ? 'Application status' : 'Workspace');
   const results = [...destinations, ...utilities].filter(item => `${item.label} ${item.description}`.toLowerCase().includes(query.toLowerCase().trim()));
   useEffect(() => {
@@ -73,7 +89,7 @@ function Workspace({admin, path, children}: {admin: boolean; path: string; child
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         navigation.current?.close();
-        if (!command.current?.open) command.current?.showModal();
+        if (!command.current?.open) { setQuery(''); command.current?.showModal(); searchInput.current?.focus(); }
       }
     }
     document.addEventListener('keydown', shortcut);
@@ -82,20 +98,20 @@ function Workspace({admin, path, children}: {admin: boolean; path: string; child
   function closeNavigation() { navigation.current?.close(); }
   function links(items: Destination[], mobile = false) {
     return items.map(item => <Link key={item.href} href={item.href} className={styles.navLink} title={collapsed && !mobile ? item.label : undefined} aria-label={item.label} aria-current={item === active ? 'page' : undefined} onNavigate={closeNavigation}>
-      <Icon name={item.icon}/><span className={styles.navLabel}>{item.label}</span>{!admin && item.icon === 'mail' && <span className={styles.count}><EnquiryCount/></span>}
+      <Icon name={item.icon}/><span className={styles.navLabel}>{item.label}</span>{dealer && item.icon === 'mail' && <span className={styles.count}><EnquiryCount/></span>}
     </Link>);
   }
   function sidebar(mobile = false) {
     return <>
       <Link href={root} className={styles.brand} aria-label='Veltrenne workspace' onNavigate={closeNavigation}>
         <Image className={styles.emblem} src='/logo/veltrenne/emblem-gold.svg' alt='' width={32} height={32}/>
-        <span className={styles.wordmark}><Image src='/logo/veltrenne/horizontal-gold.svg' alt='Veltrenne' width={154} height={20}/><small>{admin ? 'Administration' : 'Dealer workspace'}</small></span>
+        <span className={styles.wordmark}><Image src='/logo/veltrenne/horizontal-gold.svg' alt='Veltrenne' width={154} height={20}/><small>{workspaceLabel}</small></span>
       </Link>
       <nav aria-label={mobile ? 'Mobile workspace navigation' : 'Workspace navigation'} className={styles.nav}>
-        <p className={styles.groupLabel}>{admin ? 'Marketplace operations' : 'Your business'}</p>{links(destinations, mobile)}
+        <p className={styles.groupLabel}>{admin ? 'Marketplace operations' : dealer ? 'Your business' : 'Your collection'}</p>{links(destinations, mobile)}
         <p className={styles.groupLabel}>Workspace</p>{links(utilities, mobile)}
       </nav>
-      <div className={styles.sidebarFooter}><span className={styles.footerNote}>Considered details.<br/>Connected work.</span>{mobile ? <button className={styles.collapse} onClick={closeNavigation}><Icon name='close'/><span>Close navigation</span></button> : <button className={styles.collapse} aria-expanded={!collapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={() => setCollapsed(value => !value)}><Icon name='panel'/><span className={styles.navLabel}>Collapse sidebar</span></button>}</div>
+      <div className={styles.sidebarFooter}>{mobile ? <button className={styles.collapse} onClick={closeNavigation}><Icon name='close'/><span>Close navigation</span></button> : <button className={styles.collapse} aria-expanded={!collapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={() => setCollapsed(value => !value)}><Icon name='panel'/><span className={styles.navLabel}>Collapse sidebar</span></button>}</div>
     </>;
   }
   return <div className={styles.shell} data-collapsed={collapsed}>
@@ -104,19 +120,19 @@ function Workspace({admin, path, children}: {admin: boolean; path: string; child
     <div className={styles.workspace}>
       <header className={styles.topbar}>
         <button ref={mobileTrigger} className={`${styles.iconButton} ${styles.mobileMenu}`} aria-label='Open navigation' aria-haspopup='dialog' onClick={() => navigation.current?.showModal()}><Icon name='panel'/></button>
-        <div className={styles.breadcrumb}><span>{admin ? 'Administration' : 'Dealer workspace'}</span><span aria-hidden='true'>/</span><strong>{title}</strong></div>
-        <button ref={searchTrigger} className={styles.search} aria-label='Find a workspace page' aria-haspopup='dialog' onClick={() => {setQuery(''); command.current?.showModal();}}><Icon name='search'/><span>Find a workspace page</span><kbd>⌘ / Ctrl K</kbd></button>
+        <div className={styles.breadcrumb}><span>{workspaceLabel}</span><span aria-hidden='true'>/</span><strong>{title}</strong></div>
+        <button ref={searchTrigger} className={styles.search} aria-label='Find a workspace page' aria-haspopup='dialog' onClick={openSearch}><Icon name='search'/><span>Find a workspace page</span><kbd>⌘ / Ctrl K</kbd></button>
         <div className={styles.account}><AccountMenu/></div>
       </header>
       <div id='workspace-content' tabIndex={-1} className={styles.content}>
         <div key={path} className={styles.transition}>{children}</div>
       </div>
-      <footer className={styles.workspaceFooter}><span>VELTRENNE <span>/ {admin ? 'Administration' : 'Dealer workspace'}</span></span><Link href='/contact'>Help & support <span aria-hidden='true'>↗</span></Link></footer>
+      <footer className={styles.workspaceFooter}><span>VELTRENNE <span>/ {workspaceLabel}</span></span><Link href='/contact'>Help & support <span aria-hidden='true'>↗</span></Link></footer>
     </div>
     <dialog ref={navigation} className={styles.mobileDialog} aria-label='Workspace navigation' onClose={() => mobileTrigger.current?.focus()}>{sidebar(true)}</dialog>
     <dialog ref={command} className={styles.command} aria-labelledby='workspace-search-title' onClose={() => searchTrigger.current?.focus()}>
       <div className={styles.commandHeading}><div><p className={styles.groupLabel}>Quick navigation</p><h2 id='workspace-search-title'>Where would you like to go?</h2></div><button className={styles.iconButton} aria-label='Close search' onClick={() => command.current?.close()}><Icon name='close'/></button></div>
-      <label className={styles.searchField}><Icon name='search'/><span className={styles.srOnly}>Find a workspace page</span><input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder='Inventory, enquiries, settings…'/></label>
+      <label className={styles.searchField}><Icon name='search'/><span className={styles.srOnly}>Find a workspace page</span><input ref={searchInput} value={query} onChange={event => setQuery(event.target.value)} placeholder='Inventory, enquiries, settings…'/></label>
       <nav aria-label='Workspace search results' className={styles.results}>{results.length ? results.map(item => <Link key={item.href} href={item.href} onNavigate={() => command.current?.close()}><Icon name={item.icon}/><span><strong>{item.label}</strong><small>{item.description}</small></span><span aria-hidden='true'>↗</span></Link>) : <p role='status'>No matching pages. Try “inventory” or “account”.</p>}</nav>
       <p className={styles.commandHint}>Navigate with Tab · Open with Enter · Close with Escape</p>
     </dialog>

@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "Real cookie login for buyer, dealer and admin",
+    "API role boundaries and unauthenticated booking protection",
+    "Dealer application persists and admin approval enables workspace",
+    "Listing created as draft and cross-dealer reads and edits denied",
+    "Real image upload, readiness and publication persist",
+    "Buyer saved vehicle persists across requests",
+    "Buyer enquiry, dealer status save, badge count and stale conflict",
+    "Own profile update persists and privilege field edit is rejected",
+    "Bookings read contract serves own buyer records and administrator list",
+    "Admin release-hold records evidence, keeps draft and rejects stale repeat",
+    "Profile and booking persistence after database reconnect"
+  ],
+  "passed": 11
+}

@@ -1,22 +1,12 @@
 import Link from 'next/link';
-
+import styles from '@/components/layout/WorkspacePages.module.css';
 export default function BuyerPage() {
-  return (
-    <main className='mx-auto max-w-6xl p-6'>
-      <h1 className='text-3xl font-bold'>Buyer Dashboard</h1>
-
-      <div className='mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'><Link href='/buyer/enquiries' className='rounded-2xl border p-5 hover:bg-black/5'><h2 className='text-lg font-semibold'>My enquiries</h2><p className='mt-2 text-sm opacity-70'>Revisit your vehicle enquiries and see their progress.</p></Link>
-        <Link
-          href='/buyer/favorites'
-          className='rounded-2xl border p-5 hover:bg-black/5'
-        >
-          <h2 className='text-lg font-semibold'>Saved Cars</h2>
-
-          <p className='mt-2 text-sm opacity-70'>
-            View the cars you saved for later.
-          </p>
-        </Link>
-      </div>
-    </main>
-  );
+  return <main className={styles.page}>
+    <header><p className={styles.eyebrow}>Your Veltrenne</p><h1>Your next drive, taking shape.</h1><p>Return to the vehicles and conversations you’ve saved.</p></header>
+    <div className={styles.grid}>
+      <Link className={styles.card} href='/buyer/favorites'><h2>Saved vehicles</h2><p>Revisit your collection and compare your next steps.</p><span>Open collection ↗</span></Link>
+      <Link className={styles.card} href='/buyer/enquiries'><h2>Your enquiries</h2><p>Follow the progress of your conversations with sellers.</p><span>Open enquiries ↗</span></Link>
+      <Link className={styles.card} href='/bookings'><h2>Service bookings</h2><p>Check the status and details of existing service bookings.</p><span>View bookings ↗</span></Link>
+    </div>
+  </main>;
 }

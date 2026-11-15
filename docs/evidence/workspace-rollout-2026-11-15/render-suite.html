@@ -1,0 +1,60 @@
+<!doctype html><html><head><title>Veltrenne workspace audit matrix</title><style>body{font:14px Arial;background:#ddd;margin:0}header{position:sticky;top:0;padding:12px;background:white;z-index:10;display:flex;gap:16px;align-items:center}iframe{border:0;margin:12px auto;display:block;height:900px;background:white}#stage{overflow:auto}button{padding:10px}pre{white-space:pre-wrap}</style></head><body><header><button id="run">Run responsive audit</button><button id="stop">Stop</button><span id="progress">Synthetic fixture matrix. 1440 / 768 / 390 CSS pixels.</span></header><pre id="last"></pre><div id="stage"></div><script>
+const id='aaaaaaaaaaaaaaaaaaaaaaaa',dealer='/dealer/cars/'+id;
+const groups=[
+ ['dealer','/dealer',['ready','empty','error','loading']],
+ ['dealer','/dealer/cars',['ready','empty','error','loading']],
+ ['dealer','/dealer/cars?q=no-match',['ready']],
+ ['dealer','/dealer/cars?status=draft',['ready']],
+ ['dealer','/dealer/cars?status=published',['ready']],
+ ['dealer',dealer,['ready','published','held','no-photos','missing','error','loading']],
+ ['dealer',dealer+'/edit',['ready','published','missing','error','loading']],
+ ['dealer',dealer+'/images',['ready','no-photos','missing','error','loading']],
+ ['dealer','/dealer/cars/new',['ready']],
+ ['dealer','/dealer/enquiries',['ready','empty','error','loading','unavailable']],
+ ['dealer','/dealer/onboarding',['onboarding','error']],
+ ['dealer','/dealer/pending',['pending','rejected','suspended']],
+ ['admin','/admin',['ready','empty','error','loading']],
+ ['admin','/admin/dealers',['ready','empty','error','loading']],
+ ['admin','/admin/dealers/'+id,['ready','approved','rejected','suspended','missing','error','loading']],
+ ['admin','/admin/cars',['ready','empty','error','loading']],
+ ['admin','/admin/cars/'+id,['ready','published','held','suspended','missing','error','loading']],
+ ['buyer','/buyer',['ready']],
+ ['buyer','/buyer/favorites',['ready','empty','error','loading']],
+ ['buyer','/buyer/enquiries',['ready','empty','error','loading','unavailable']],
+ ...['buyer','dealer','admin'].map(role=>[role,'/account',['ready','unverified','security-error']]),
+ ...['buyer','admin'].map(role=>[role,'/bookings',['ready','empty','error','loading','unavailable']]),
+ ...['/buyer','/buyer/favorites','/buyer/enquiries','/account','/bookings','/dealer','/admin'].map(route=>['guest',route,['ready']]),
+ ['buyer','/admin',['ready']],['buyer','/dealer',['ready']],['dealer','/buyer',['ready']],['dealer','/bookings',['ready']],
+ ['buyer','/account',['session-error']],
+];
+let stopped=false;
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+async function post(record){await fetch('http://localhost:5067/audit',{method:'POST',body:JSON.stringify(record)})}
+run.onclick=async()=>{
+ stopped=false;run.disabled=true;let index=0;const total=groups.reduce((n,x)=>n+x[2].length*3,0);
+ for(const [role,route,states] of groups)for(const state of states)for(const width of [1440,768,390]){
+ if(stopped){run.disabled=false;return;}
+ document.cookie='qa_role='+role+';path=/;SameSite=Lax';document.cookie='qa_state='+state+';path=/;SameSite=Lax';
+ index++;if(index<=Number(new URLSearchParams(location.search).get('start')||0))continue;
+ progress.textContent=index+' / '+total+' · '+role+' · '+state+' · '+route+' · '+width;
+ const frame=document.createElement('iframe');frame.style.width=width+'px';frame.title='Actual workspace '+route;stage.replaceChildren(frame);
+ const loaded=new Promise(resolve=>frame.onload=resolve);frame.src=route;await Promise.race([loaded,pause(20000)]);
+ let doc,win;await pause(state==='loading'?350:1100);
+ for(let retries=0;retries<30;retries++){
+ doc=frame.contentDocument;win=frame.contentWindow;
+ if(doc?.querySelector('main,h1,[role=alert]')&&(state==='loading'||(!/Loading|Checking your account/.test(doc.querySelector('main')?.textContent||'')&&!doc.querySelector('[data-nextjs-dialog]'))))break;
+ await pause(350);
+ }
+ try{
+ const elements=[...doc.querySelectorAll('main *,header *,aside *')].filter(el=>{const r=el.getBoundingClientRect(),s=win.getComputedStyle(el);return r.width&&r.height&&s.visibility!=='hidden'&&!el.closest('dialog:not([open])')&&s.position!=='fixed'});
+ const overflow=elements.filter(el=>{const r=el.getBoundingClientRect();return r.right>doc.documentElement.clientWidth+2&&win.getComputedStyle(el).overflowX==='visible'}).slice(0,12).map(el=>({tag:el.tagName,text:el.textContent.slice(0,80),right:Math.round(el.getBoundingClientRect().right)}));
+ const record={suite:true,index,role,state,route,url:win.location.pathname,width:win.innerWidth,documentWidth:doc.documentElement.scrollWidth,heading:doc.querySelector('h1')?.textContent,mainCount:doc.querySelectorAll('main').length,overflow,nav:[...doc.querySelectorAll('nav[aria-label="Workspace navigation"] a')].map(a=>a.getAttribute('href')),alerts:[...doc.querySelectorAll('[role=alert]')].map(el=>el.textContent.slice(0,300)),statuses:[...doc.querySelectorAll('[role=status]')].map(el=>el.textContent.slice(0,200))};
+ last.textContent=JSON.stringify(record,null,2);await post(record);
+ }catch(e){await post({suite:true,index,role,state,route,width,error:String(e)})}
+ frame.src='about:blank';frame.remove();
+ if(index%18===0){location.href='/suite.html?start='+index;return;}
+ }
+ progress.textContent='Finished '+total+' responsive render cases';await post({suite:true,finished:true,total});run.disabled=false;
+};stop.onclick=()=>stopped=true;
+if(new URLSearchParams(location.search).has('start'))run.onclick();
+</script></body></html>

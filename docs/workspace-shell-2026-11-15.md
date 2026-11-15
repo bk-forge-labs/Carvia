@@ -1,6 +1,54 @@
 # Persistent dealer/admin workspace — 15 November 2026
 
-Status: **Ready for owner review; not release approval.**
+Status: **Shared workspace expanded locally; verification evidence below. Not a completed operations suite or release approval.**
+
+The rollout update below supersedes the original milestone’s scope and delivery status. The original record is retained after it.
+
+## Rollout update — local main after 096e547
+
+### Baseline and boundaries
+Work started with a clean checkout at `167da19cf0a84d32b4d94a323454a65b73e7b708`, containing the imported and pushed shell commit `096e5471c4f1522fb648c8c064baf58895acaff5`. The earlier bundle-delivery limitation at the end of this document is historical: the bundle was subsequently imported and main pushed. This rollout's changes are local and uncommitted. No deployment, production configuration change, live customer mutation, database migration, dependency or product asset change was made.
+
+### What changed
+- The persistent shell now derives navigation from the authenticated role across dealer, admin, buyer, account and bookings. Account and saved vehicles moved from the public route group into the dashboard route group without changing their URLs. Public marketplace layout, header and identity remain intact.
+- Buyer overview now provides saved vehicles, enquiries and existing service booking records. The buyer layout enforces the buyer role. Admin retains review destinations; dealer retains inventory and enquiries. Dealer bookings remain unavailable because the existing API does not grant that permission.
+- `/bookings` now reads existing buyer-owned or administrator booking records from the existing protected endpoints. It supports status filtering, pagination, local-time dates, notes, cancellation reasons, missing-service/account fallbacks, loading, error/retry and empty states. It does not schedule appointments or approve/cancel/complete bookings.
+- Nested forms, galleries, reviews, inboxes and account panels respond to the actual space beside the sidebar through scoped container queries. Form fields, detail sidebars, cards, long names, controls and pagination stack at narrow widths. Public collection styling changes apply only within the named workspace container.
+- Dashboard route loading screens share one themed component and errors expose retry/account recovery. `/dealers` redirects to the existing guarded dealer entry. Safe sign-in return destinations include buyer overview and bookings.
+- Page finder clears old searches and explicitly focuses its input. Account highlighting uses the shared destinations. Sidebar state survives client navigation.
+- Real isolated booking creation exposed `schema.saveParse` in backend validation. Corrected it to Zod's `safeParse` and added acceptance/rejection regression tests. Singular booking/publication-hold labels were corrected after inspection.
+
+### Evidence and actual checks
+- [Responsive render matrix](evidence/workspace-rollout-2026-11-15/render-matrix.json): 318 actual Next.js render observations at 1440, 768 and 390 CSS px; document width and visible descendant bounds recorded, with zero recorded horizontal-overflow findings. Includes all affected route families, ordinary/empty/error/delayed/missing/unavailable states where applicable, dealer status variants, account security variants, guest redirects and wrong-role redirects. This is a DOM render audit, not 318 individually reviewed screenshots.
+- Server-rendered delayed cases can finish before measurement; their recorded headings show the resolved state. They do not prove every transient route-loading frame. Client loading statuses are recorded where observed.
+- Native Chrome visual inspection compared all three widths for dealer overview, inventory, listing detail, published edit, new listing, photo management, enquiries, application and rejected status; admin overview, dealer directory/detail and inventory review directory/detail; buyer overview, collection and unavailable-listing enquiries; account and security-error panels; buyer bookings and administrator missing-service bookings. Long-form edit sections were scrolled through; earlier tall-frame comparisons were supplemented with 900px-high desktop/tablet and 844px-high phone checks.
+- Native keyboard/UI checks observed Cmd+K input focus, no-match feedback, keyboard result navigation to bookings, Escape focus return, collapsed sidebar retention after navigation, actual phone drawer open/link/close, account menu role links, and sign-out returning to `/login?next=%2Fbookings`. Admin release-hold evidence form expansion and cancellation were observed without changing a real record.
+- [Real workflow results](evidence/workspace-rollout-2026-11-15/workflow-results.json): 11 passing groups using the real Express/Mongoose application and a disposable localhost MongoDB replica set: role logins/denials, dealer application/approval, draft ownership, real image upload/readiness/publication, favorites, enquiry status/badge/stale conflict, own profile/privilege rejection, buyer/admin booking read contract, evidence-based hold release/stale repeat, reconnect persistence. The actual buyer sign-in and persisted booking were also observed in Chrome. These API/database checks are separate from fixture rendering. The disposable database container was stopped and removed after verification; its test data is not retained.
+- Final backend suite: 58 passed, zero failed, one database-only test skipped in the ordinary run. That integration test was run separately against the disposable replica set and passed 1/1. An initial repeat failed because the temporary container had stopped; after recreation the test passed. Existing Mongoose option deprecation warnings remain.
+- Frontend auth-return tests: 4/4. Final route type generation, TypeScript, focused ESLint and `git diff --check` passed. Final default Turbopack production build passed and generated 34 static pages. Existing Next middleware convention warning remains.
+- Chrome's development hydration warning identified Grammarly-added body attributes. It was not hidden or patched around. Deliberately injected API failures also generate expected development errors. There is no blanket clean-console claim.
+
+### Evidence limits and remaining verification
+The matrix plus page inspections provide substantially broader evidence than overview samples. They do not establish a complete manual visual/keyboard traversal of every mutation confirmation, saving/toast, stale-conflict, retry and pagination combination at every width. Some lower sections and transient server loading frames still need that manual pass before an exhaustive audit can be claimed. Reduced-motion and hover styles were inspected in code; temporal motion, physical devices, screen-reader testing, measured performance and hosted behavior remain unassessed. These limitations are retained rather than marking the entire requested audit complete.
+
+### Explicitly unfinished product scope
+- **Calendar / appointments / meetings / test drives:** scheduling model, timezone rules, ownership, conflicts, permissions and reminder behavior remain unfinished.
+- **Integrated email:** provider setup, persisted history, retries, delivery/failure status and inbox integration remain unfinished. Existing email links and account security screens do not complete that scope. QA disabled real email delivery.
+- **Tasks / follow-ups / team responsibilities:** persistent tasks, assignments, due dates and permission rules remain unfinished.
+- **Booking actions:** scheduling and approve/cancel/complete interfaces remain unfinished. This rollout supplies existing-record views only.
+
+### Changed files
+- Shell/navigation: `WorkspaceShell.tsx`, `WorkspaceShell.module.css`, new `WorkspaceLoading.tsx` and `WorkspacePages.module.css`, under `src/components/layout`.
+- Routes: moved `(public)/account/page.tsx` and `(public)/buyer/favorites/page.tsx` into `(dashboard)`; added buyer role layout and dashboard error boundary; changed buyer overview, bookings and dealers alias pages; replaced root/admin/admin-cars/buyer/dealer/dealer-cars/bookings loading files with the shared loading export.
+- Nested layout fixes: `DealerDirectory.module.css`, `AccountSettings.module.css`, `Collection.module.css`, `DealerApplication.module.css`, `DealerCarCreateForm.module.css`, `DealerCarImagesManager.module.css`, `DealerCommandCenter.module.css`, `DealerWorkspace.module.css`, `EnquiryInbox.module.css`. Singular hold copy in `AdminOverview.tsx`.
+- Booking view: new `src/components/bookings/Bookings.tsx`.
+- Contracts/tests: `src/lib/auth/returnTo.ts`, `tests/auth-return.test.cjs`, `server/middleware/validate.js`, new `server/tests/booking-validation.test.js`.
+- Handoff/evidence: this document and `docs/evidence/workspace-rollout-2026-11-15/`. Generated `next-env.d.ts` restored to its pre-task content.
+
+### Review and continuation
+Local synthetic preview: [responsive comparison](http://localhost:3017/visual.html?role=dealer&route=/dealer). It requires the temporary fixture runtime and is not customer data or a deployment. The evidence README describes the harness and isolation. Next gate: finish the remaining manual state traversal above, then owner acceptance of the shared workspace. Launch approval remains separate; do not deploy on the basis of this document.
+
+## Original shell milestone (historical)
 
 ## Objective and reference
 The owner asked to apply the persistent sidebar, top bar, rounded workspace surface and click/entry behaviour shown in the supplied 13.9-second Admin Dashboard V7 recording. The previous dashboard had improved page content but retained horizontal navigation. This milestone establishes the shared navigation shell with Veltrenne's existing charcoal, muted green and champagne-gold identity. It is an adaptation of the reference, not a claim of pixel-identical reproduction of its light chart cards or a complete operations suite.
