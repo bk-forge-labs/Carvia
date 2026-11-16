@@ -2,7 +2,7 @@
 
 Status: **local implementation checkpoint; full scope remains unfinished. No release approval.**
 
-Implementation checkpoint: `8a6f032` (local only; no push).
+Historical implementation checkpoint: `8a6f032`. Subsequent owner-authorized commits were pushed through `8374887` on `feat/veltrenne-connected-workspace`. The owner subsequently authorized committing and pushing the 16 November review fixes below; the release and remaining acceptance gates are unchanged. Temporary tunnel sharing was subsequently authorized; it is not a production deployment.
 
 Started from clean `feat/veltrenne-connected-workspace` at `7c70192`. Both connected workspace and buyer screen compositions were explicitly approved by the owner. The [consolidated requirement checklist](buyer-experience-checklist-2026-11-15.md) remains the source of scope and acceptance status. Every row is required; implemented does not mean fully verified.
 
@@ -60,3 +60,19 @@ Database additions: BuyerDecision plus indexes; additive Car eligibility/confide
 Owner requested direct return to the public home page. `WorkspaceShell.tsx` adds a home icon and “Back to home” destination (`/`) to shared utilities, reused by all roles, collapsed-sidebar accessible labels, mobile navigation and quick search. Existing Next Link navigation closes the mobile drawer. No database or asset changes.
 
 Focused ESLint and TypeScript passed. Native Chrome at localhost:3003 showed the new dealer-sidebar link; clicking it returned to `/` and displayed the public hero. Mobile/other-role rendering uses the same destination configuration but was not separately visually audited in this small change. The dealer overview displayed its page-loading error state during verification; the home link still worked. That separate overview error needs diagnosis and is not claimed fixed here.
+
+
+## 16 November 2026 — review defect fixes
+
+See [requirement-by-requirement fix evidence](review-fixes-2026-11-16.md). Five code defects from the review are corrected: moderation response privacy; reserved-slot calendar visibility/conflict times; replacing expired proposals; routing enquiry/task appointment actions to the connected conversation with explicit private-calendar wording; and rendering the original buyer request. No schema migration, owner-data modification, new composition, production mail or deployment.
+
+The owner API on 5050 was an older process running Node 20. Restarting with the current source and unchanged server .env failed to reconnect to Atlas. A separate connection check under Node 22 reproduced the same TLS alert 80 as Node 24. The owner API is currently unavailable; restoring it remains blocked on Atlas/network connectivity. Do not redirect the owner preview to synthetic data. The Atlas connector reports AI access disabled for all connected organizations; no access-list or TLS protections were changed. An owner check of cluster/network access was requested.
+
+Isolated QA 3021/5081 was refreshed with the changes and still uses only `veltrenne_workspace_preview`. The existing public tunnel snapshot was not refreshed by this task. The full calendar/email/tasks/dashboard state audit, document infrastructure, production delivery and actual participant validation remain unfinished as listed above. Fresh native evidence covers original message visibility and Escape/focus return; browser control subsequently failed with `noWindowsAvailable`, so final calendar and navigation visual verification remains open.
+
+
+### Atlas reconnection follow-up — 16 November
+
+After the owner reconnected Atlas, a fresh Node 24 connection and database ping succeeded. The current API was restarted on 5050 using the existing .env. `/api/health` returns 200; `/api/test-drives/summary`, `/api/buyer/decisions` and `/api/workspace/messages` each return 401 without credentials, confirming the routes exist and authentication remains enforced. This supersedes the earlier unavailable-API blocker. No security configuration or database target was changed.
+
+Signed-in browser verification remains open: native Chrome capture failed with ScreenCaptureKit error -3811 (audio/video capture failure). Route availability is verified; authenticated workflow/visual acceptance is not newly claimed. No commit, push or deployment in this follow-up.

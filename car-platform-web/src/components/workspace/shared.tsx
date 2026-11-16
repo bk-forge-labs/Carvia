@@ -4,7 +4,7 @@ import {useQuery} from '@tanstack/react-query';
 import {useAuth} from '@/lib/store/auth';
 import {api} from '@/lib/api/browser';
 import styles from './Operations.module.css';
-export type Appointment={buyerRequest?:boolean;_id:string;__v:number;title:string;type:'meeting'|'test-drive';start:string;end:string;timeZone:string;status:'scheduled'|'cancelled'|'completed';notes:string;outcome:string;vehicle:string|null;enquiry:string|null;customer:string|null};
+export type Appointment={reservedStart?:string;reservedEnd?:string;reservedTimeZone?:string;calendarSlot?:string;buyerRequest?:boolean;_id:string;__v:number;title:string;type:'meeting'|'test-drive';start:string;end:string;timeZone:string;status:'requested'|'reschedule-proposed'|'declined'|'scheduled'|'cancelled'|'completed';notes:string;outcome:string;vehicle:string|null;enquiry:string|null;customer:string|null};
 export type Task={_id:string;__v:number;title:string;dueAt:string;timeZone:string;status:'open'|'in-progress'|'done'|'cancelled';notes:string;vehicle:string|null;enquiry:string|null;appointment:string|null};
 export type Mail={_id:string;appointment:string;appointmentVersion:number;recipient:string;messageId?:string;subject:string;text:string;state:'queued'|'sending'|'provider-accepted'|'failed'|'unknown';failure:string;attempts:number;createdAt:string;acceptedAt:string|null};
 export type Options={vehicles:{_id:string;title:string}[];enquiries:{_id:string;vehicleTitle:string;buyer:{name:string}|null;car:string}[];appointments:{_id:string;title:string}[];truncated:boolean;mailAvailable:boolean};

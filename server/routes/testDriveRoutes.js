@@ -44,7 +44,7 @@ router.put('/:id',asyncHandler(async(req,res)=>{
   const a=await Appointment.findOne({_id:prior._id,...scope(req)}).session(session);
   if(a.__v!==body.expectedVersion)throw new AppError('This request changed. Reload before updating.',409);
   const dealer=req.user.role==='dealer';
-  const allowed={confirm:dealer&&a.status==='requested',decline:dealer&&['requested','reschedule-proposed'].includes(a.status),'propose-reschedule':dealer&&['requested','scheduled'].includes(a.status),'accept-reschedule':!dealer&&a.status==='reschedule-proposed',cancel:['requested','scheduled','reschedule-proposed'].includes(a.status),complete:dealer&&a.status==='scheduled'};
+  const allowed={confirm:dealer&&a.status==='requested',decline:dealer&&['requested','reschedule-proposed'].includes(a.status),'propose-reschedule':dealer&&['requested','scheduled','reschedule-proposed'].includes(a.status),'accept-reschedule':!dealer&&a.status==='reschedule-proposed',cancel:['requested','scheduled','reschedule-proposed'].includes(a.status),complete:dealer&&a.status==='scheduled'};
   if(!allowed[body.action])throw new AppError('This action is not permitted for the current request state.',409);
   if(body.action==='propose-reschedule'){const t=interval(body);if(+t.start<=Date.now())throw new AppError('Choose a future time.',400);if(a.status==='scheduled'){a.reservedStart=a.start;a.reservedEnd=a.end;a.reservedTimeZone=a.timeZone;}Object.assign(a,t);}
   if(['confirm','accept-reschedule','propose-reschedule'].includes(body.action)&&+a.start<=Date.now())throw new AppError('The proposed time has passed. Propose a future time.',409);

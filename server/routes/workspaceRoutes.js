@@ -115,10 +115,10 @@ async function saveAppointment(req, body, recordIdValue) {
     const conflicts = status === 'scheduled' ? await Appointment.find({
       ...owned(req),...require('../services/calendarLock').overlap(times.start,times.end),
       ...(recordIdValue ? {_id:{$ne:recordIdValue}} : {}),
-    }).select('title start end').session(session) : [];
+    }).select('title start end status reservedStart reservedEnd').session(session) : [];
     if (conflicts.length && !body.acceptConflicts) {
       const error = new AppError('This overlaps another appointment. Review the conflicts and explicitly allow overlap to save.',409);
-      error.details = {conflicts};
+      error.details = {conflicts:conflicts.map(item=>({_id:item._id,title:item.title,start:item.status==='reschedule-proposed'?item.reservedStart:item.start,end:item.status==='reschedule-proposed'?item.reservedEnd:item.end}))};
       throw error;
     }
     if (status === 'completed' && !body.outcome?.trim()) throw new AppError('Record an outcome before completing the appointment.',400);
@@ -139,7 +139,7 @@ router.get('/appointments',route(async(req,res) => {
   const from = new Date(typeof req.query.from === 'string' ? req.query.from : '');
   const to = new Date(typeof req.query.to === 'string' ? req.query.to : '');
   if (!Number.isFinite(+from) || !Number.isFinite(+to) || to <= from || to-from > 63*86400000) throw new AppError('Choose a date range of up to 63 days.',400);
-  const data = await Appointment.find({...owned(req),start:{$lt:to},end:{$gt:from}}).sort({start:1}).limit(501);
+  const data = await Appointment.find({...owned(req),$or:[{start:{$lt:to},end:{$gt:from}},{status:'reschedule-proposed',reservedStart:{$lt:to},reservedEnd:{$gt:from}}]}).sort({start:1}).limit(501);
   res.json({data:data.slice(0,500),truncated:data.length>500});
 }));
 router.post('/appointments',route(async(req,res) => res.status(201).json({data:await saveAppointment(req,parse(createAppointment,req.body))})));

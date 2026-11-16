@@ -1,0 +1,6 @@
+Node 24: Atlas connection and ping succeeded
+GET /api/health: 200
+GET /api/test-drives/summary without credentials: 401 Not authorized
+GET /api/buyer/decisions without credentials: 401 Not authorized
+GET /api/workspace/messages without credentials: 401 Not authorized
+Native Chrome: ScreenCaptureKit -3811, capture failure; authenticated browser check remains open.

@@ -1,6 +1,8 @@
 const { publicInventory } = require('../utils/publicInventory');
 const { removeUnusedUploads } = require('../utils/removeUnusedUploads');
 const mongoose = require('mongoose');
+const dealerCarView = require('../utils/dealerCarView');
+const carView = (req, car) => req.user?.role === 'dealer' ? dealerCarView(car) : car;
 const Car = require('../models/Car');
 const path = require('path');
 const fs = require('fs');
@@ -40,7 +42,7 @@ exports.getCars = async (req, res) => {
     const cars = await Car.find().populate('dealer', 'name email role');
     res.json({
       success: true,
-      data: cars,
+      data: cars.map(car => carView(req, car)),
     });
   } catch (error) {
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({ success: false, message: error.message });
@@ -54,7 +56,7 @@ exports.getCar = async (req, res) => {
     );
     res.json({
       success: true,
-      data: car,
+      data: carView(req, car),
     });
   } catch (error) {
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({ success: false, message: error.message });
@@ -233,7 +235,7 @@ exports.createCar = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: car,
+      data: carView(req, car),
     });
   } catch (error) {
     return res.status(400).json({
@@ -283,7 +285,7 @@ exports.updateCar = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: updateCar,
+      data: carView(req, updateCar),
     });
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -312,7 +314,7 @@ exports.getMyCars = async (req, res) => {
     return res.status(200).json({
       success: true,
       count: cars.length,
-      data: cars,
+      data: cars.map(car => carView(req, car)),
     });
   } catch (error) {
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({ message: error.message });
@@ -333,7 +335,7 @@ exports.publishMyCar = async (req,res) => {
       if (!updated.isPublished) throw new AppError('This vehicle requires another review before publication.',409);
       return updated;
     });
-    return res.json({success:true,data:car,message:'Car published'});
+    return res.json({success:true,data: carView(req, car),message:'Car published'});
   } catch(error) { return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({success:false,message:error.message}); }
 };
 
@@ -360,7 +362,7 @@ exports.unpublishMyCar = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Car unpublished',
-      data: update,
+      data: carView(req, update),
     });
   } catch (error) {
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
@@ -431,7 +433,7 @@ exports.updateMyCar = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: updated,
+      data: carView(req, updated),
     });
   } catch (error) {
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
@@ -525,7 +527,7 @@ exports.uploadMyCarImages = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Images uploaded',
-      data: car,
+      data: carView(req, car),
     });
   } catch (error) {
     await Promise.all((req.files || []).map(file => fs.promises.unlink(file.path).catch(() => {})));
@@ -578,7 +580,7 @@ exports.deleteMyCarImage = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Image removed',
-      data: car,
+      data: carView(req, car),
     });
   } catch (error) {
     return res.status(error.name === 'VersionError' ? 409 : error.statusCode || 500).json({
@@ -619,7 +621,7 @@ exports.setCarMainImage = asyncHandler(async (req, res) => {
   return res.status(200).json({
     success: true,
     message: 'Main image updated',
-    data: car,
+    data: carView(req, car),
   });
 });
 
@@ -633,7 +635,7 @@ exports.reorderMyCarImages = async (req, res) => {
     }
     car.images = images;
     await car.save();
-    return res.json({success:true,data:car});
+    return res.json({success:true,data: carView(req, car)});
   } catch(error) {
     return res.status(error.name === 'VersionError' ? 409 : 400).json({success:false,message:'Unable to save photo order. Refresh the page and try again.'});
   }

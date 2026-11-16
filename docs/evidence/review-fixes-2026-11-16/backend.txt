@@ -1,0 +1,90 @@
+✔ account update validates names and rejects role or email changes (1.340292ms)
+✔ account update only targets authenticated user and returns safe fields (1.127667ms)
+✔ authentication rejects non-string query operators and invalid bodies (0.63425ms)
+✔ registration normalizes email and name without granting admin access (0.2765ms)
+✔ registration rejects invalid names and passwords beyond bcrypt byte limit (0.536833ms)
+✔ authentication limits repeated requests and supplies retry information (74.261792ms)
+✔ booking validation accepts the supported request before the controller runs (2.166125ms)
+✔ booking validation rejects missing fields with a client error (1.28725ms)
+(node:33017) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ isolated buyer decision privacy, replies, eligibility and connected appointment transitions (1100.840583ms)
+✔ dealer profile exposes company name and status-specific feedback without moderator identity (0.98275ms)
+✔ dealer edits reject invalid draft numbers before writing (4.503459ms)
+✔ dealer edits trim description and preserve explicit zero mileage (0.459833ms)
+✔ dealer edits cannot write publication or ownership fields (0.080584ms)
+✔ local CORS defaults are preserved (0.800416ms)
+✔ production requires explicit HTTPS origin, storage and secret (0.190375ms)
+✔ configured photo storage survives process restart and publication checks use it (116.057791ms)
+✔ enquiries validate vehicle identity and message before database access (0.922542ms)
+✔ inbox ownership always derives from authenticated identity (0.097708ms)
+✔ status changes require a known current state and valid destination (0.095125ms)
+✔ rejects invalid vehicle IDs without writes (0.564875ms)
+✔ saving unavailable inventory is rejected (0.137083ms)
+✔ save uses atomic set membership on authenticated user only (0.43725ms)
+✔ removal works even after a listing disappears and never toggles (0.08525ms)
+✔ missing user is not reported as success (0.071333ms)
+✔ database errors do not expose internal details (0.128541ms)
+✔ photo signatures reject mislabeled markup and accept the supported headers (0.457666ms)
+✔ review input requires timestamp and meaningful bounded note (0.909625ms)
+✔ all release confirmations are required before database access (0.236833ms)
+✔ stale dealer cannot be changed (0.191167ms)
+✔ illegal status transitions cannot be applied (0.106792ms)
+✔ suspension records the right action and withdraws stock within the transaction (0.148375ms)
+✔ unapproved seller cannot have a hold released (0.153791ms)
+✔ identity, price and photo changes invalidate a review and unpublish (0.913292ms)
+✔ unchanged reviewed record and unreviewed draft are preserved (0.441916ms)
+✔ dealer publication controller rejects unapproved sellers before writing a car (204.458792ms)
+✔ photo order accepts only an exact permutation and preserves cover (0.840083ms)
+✔ photo order rejects missing ownership without saving (0.089125ms)
+✔ over-capacity upload rejects entire batch and cleans new files (4.462917ms)
+✔ first upload selects cover and appends only submitted photos (1.856334ms)
+✔ complete record with a readable photograph passes structural checks (2.998792ms)
+✔ review hold cannot be bypassed by correcting a title (0.190208ms)
+✔ test titles and incorrect identity remain drafts (0.093375ms)
+✔ invalid prices, years and mileage cannot publish (0.099042ms)
+✔ missing, unselected, external and traversing images cannot publish (0.087125ms)
+✔ incomplete drafts remain editable (0.098292ms)
+✔ published incomplete records are rejected with an actionable client error (0.683666ms)
+✔ readiness exposes missing fields, photos and review holds (0.763958ms)
+✔ readiness includes dealer approval and does not release holds (0.132625ms)
+✔ readiness does not reveal vehicles belonging to another dealer (0.078083ms)
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:33030) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+✔ isolated database: publication conflict, dealer re-review, single-use recovery, cleanup (2262.927ms)
+✔ image validation rejects truncated files even with genuine magic headers (5.19925ms)
+✔ images decode, lose metadata and reject a mismatched declared format (5.767875ms)
+✔ vehicle technical fields survive create and update validation (2.916208ms)
+✔ dealer read and write serializer never exposes internal review material (0.11025ms)
+✔ production inventory excludes samples without removing local records (0.081625ms)
+✔ new passwords enforce a byte limit and token digests do not store bearer secrets (0.34425ms)
+✔ test-drive setting accepts only explicit booleans (1.787042ms)
+✔ legacy, disabled, unpublished, sold, held and demo listings cannot accept test drives (0.126375ms)
+✔ combined filters constrain fields and colour choices use OR (0.982125ms)
+✔ bad ranges, arrays, nested operators and invalid specifications are rejected (0.624792ms)
+✔ dealer specifications validate without making unknown values required (2.39925ms)
+✔ unknown new details preserve existing approval fingerprint; confirmed edits change it (0.379709ms)
+✔ calendar rejects impossible dates, spring gaps and invalid zones (13.795042ms)
+✔ calendar requires explicit repeated-hour choice and stores distinct UTC instants (2.040375ms)
+✔ calendar handles quarter-hour zones and day/year boundaries (0.814916ms)
+✔ appointment intervals compare instants across DST and reject reversed or excessive durations (3.407542ms)
+✔ local mail sink cannot disable TLS in production or for non-loopback hosts (30.040041ms)
+Verified workspace role boundaries, conflict serialization, stale edits, task persistence, cancellation/outcome and real local SMTP acceptance/failure/deduplication.
+✔ isolated workspace: permissions, persistence, concurrency, workflow and SMTP deduplication (1007.098416ms)
+ℹ tests 68
+ℹ suites 0
+ℹ pass 68
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2627.970125

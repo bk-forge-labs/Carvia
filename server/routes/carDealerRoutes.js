@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const dealerCarView = require('../utils/dealerCarView');
 
 const {
   getMyCars,
@@ -33,7 +34,7 @@ router.use(authorize('dealer'));
 
 // GET /api/dealer/cars/my
 router.get('/my', getMyCars);
-router.get('/:id', checkCarOwnerShip, (req,res) => res.json({ success:true, data:req.car }));
+router.get('/:id', checkCarOwnerShip, (req,res) => res.json({ success:true, data:dealerCarView(req.car) }));
 router.put('/:id/photo-categories',checkCarOwnerShip,require('../utils/asyncHandler')(async(req,res)=>{
  const Car=require('../models/Car'),AppError=require('../utils/AppError'),{z}=require('zod');
  const parsed=z.object({categories:z.array(z.object({url:z.string(),category:z.enum(['exterior','interior','condition','unclassified'])}).strict()).max(100),expectedVersion:z.number().int().min(0)}).strict().safeParse(req.body);
@@ -42,7 +43,7 @@ router.put('/:id/photo-categories',checkCarOwnerShip,require('../utils/asyncHand
  if(!car)throw new AppError('Vehicle not found.',404);
  if(car.__v!==parsed.data.expectedVersion)throw new AppError('Photos changed. Reload before labelling.',409);
  if(new Set(parsed.data.categories.map(x=>x.url)).size!==parsed.data.categories.length||parsed.data.categories.some(x=>!car.images.includes(x.url)))throw new AppError('Label only photographs already supplied for this vehicle.',400);
- car.photoCategories=parsed.data.categories;await car.save();res.json({data:car});
+ car.photoCategories=parsed.data.categories;await car.save();res.json({data:dealerCarView(car)});
 }));
 router.get('/:id/readiness', checkCarOwnerShip, getMyCarReadiness);
 

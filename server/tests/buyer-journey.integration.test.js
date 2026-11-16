@@ -18,7 +18,7 @@ test('isolated buyer decision privacy, replies, eligibility and connected appoin
  const car=await Car.create({dealer:users.dealer._id,title:'BMW i4',brand:'BMW',model:'i4',price:30000,year:2024,mileage:1,images:['/uploads/car.jpg'],mainImage:'/uploads/car.jpg',isPublished:true,testDriveAvailable:true});
  await User.updateOne({_id:users.buyer._id},{$addToSet:{favorites:car._id}});
  const enquiry=await Enquiry.create({buyer:users.buyer._id,dealer:users.dealer._id,car:car._id,vehicleTitle:car.title,dealerName:'QA',message:'Please answer my question about this vehicle.'});
- const app=express();app.use(express.json(),cookieParser());app.use('/requests',routes);app.use('/decisions',decisions);app.use('/enquiries',enquiries);app.use(require('../middleware/errorMiddleware').errorHandler);
+ const app=express();app.use(express.json(),cookieParser());app.use('/requests',routes);app.use('/workspace',require('../routes/workspaceRoutes'));app.use('/dealer-cars',require('../routes/carDealerRoutes'));app.use('/decisions',decisions);app.use('/enquiries',enquiries);app.use(require('../middleware/errorMiddleware').errorHandler);
  server=app.listen(0,'127.0.0.1');await once(server,'listening');
  async function call(role,url,method='GET',body){const r=await fetch('http://127.0.0.1:'+server.address().port+url,{method,headers:{'Content-Type':'application/json',...(role?{Cookie:'access_token='+jwt.sign({id:String(users[role]._id)},process.env.JWT_SECRET)}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,body:await r.json()};}
  assert.equal((await call('dealer','/decisions')).status,403);
@@ -39,7 +39,7 @@ test('isolated buyer decision privacy, replies, eligibility and connected appoin
  assert.equal((await call('buyer','/enquiries/'+enquiry.id+'/replies','POST',{requestKey:randomUUID(),text:'Thank you. Can we arrange a test drive?'})).status,201);
  assert.equal((await call('dealer','/enquiries/summary')).body.unansweredCount,1);
  const input={enquiry:enquiry.id,requestKey:randomUUID(),message:'Please arrange a viewing.',startLocal:'2028-04-03T10:00',endLocal:'2028-04-03T11:00',timeZone:'Europe/Berlin'};
- const created=await call('buyer','/requests','POST',input);assert.equal(created.status,201,JSON.stringify(created.body));let a=created.body.data;assert.equal(a.status,'requested');assert.equal('notes' in a,false);
+ const created=await call('buyer','/requests','POST',input);assert.equal(created.status,201,JSON.stringify(created.body));let a=created.body.data;assert.equal(a.status,'requested');assert.equal(a.message,input.message);assert.equal('notes' in a,false);
  assert.equal((await call('buyer','/requests','POST',input)).body.data.id,a.id);
  assert.equal((await call('buyer','/requests','POST',{...input,requestKey:randomUUID()})).status,409);
  assert.equal((await call('other','/requests')).body.data.length,0);assert.equal((await call('admin','/requests')).status,403);
@@ -51,6 +51,22 @@ test('isolated buyer decision privacy, replies, eligibility and connected appoin
  assert.equal((await Appointment.findById(a.id)).status,'scheduled');
  r=await act('dealer','propose-reschedule',{startLocal:'2028-04-04T10:00',endLocal:'2028-04-04T11:00'});assert.equal(r.status,200);a=r.body.data;
  assert.equal(a.reservedStart,'2028-04-03T08:00:00.000Z');
+ // Range queries must include the still-confirmed reservation, even in another month.
+ r=await act('dealer','propose-reschedule',{startLocal:'2028-06-04T10:00',endLocal:'2028-06-04T11:00'});assert.equal(r.status,200);a=r.body.data;
+ assert.equal(a.reservedStart,'2028-04-03T08:00:00.000Z');
+ const originalDay=await call('dealer','/workspace/appointments?from=2028-04-03T00:00Z&to=2028-04-04T00:00Z');
+ assert.equal(originalDay.status,200);assert(originalDay.body.data.some(record=>record._id===a.id));
+ assert.equal((await call('admin','/workspace/appointments?from=2028-04-03T00:00Z&to=2028-04-04T00:00Z')).body.data.length,0);
+ const overlap=await call('dealer','/workspace/appointments','POST',{title:'Overlapping internal meeting',type:'meeting',...timing,requestKey:randomUUID()});
+ assert.equal(overlap.status,409);assert.equal(overlap.body.conflicts[0].start,'2028-04-03T08:00:00.000Z');
+ // An expired proposal can be replaced without losing the original reservation.
+ await Appointment.updateOne({_id:a.id},{$set:{start:new Date('2020-04-04T08:00Z'),end:new Date('2020-04-04T09:00Z')}});
+ assert.equal((await act('buyer','accept-reschedule')).status,409);
+ assert.equal((await act('buyer','propose-reschedule')).status,409);
+ assert.equal((await act('dealer','propose-reschedule',{expectedVersion:99})).status,409);
+ r=await act('dealer','propose-reschedule',{startLocal:'2028-04-04T10:00',endLocal:'2028-04-04T11:00'});assert.equal(r.status,200);a=r.body.data;
+ assert.equal(a.reservedStart,'2028-04-03T08:00:00.000Z');
+
  r=await act('buyer','accept-reschedule');assert.equal(r.status,200);a=r.body.data;
  r=await act('dealer','complete',{update:'Viewing completed; buyer requested a quote.'});assert.equal(r.status,200);a=r.body.data;
  assert.match(a.outcome,/Viewing completed/);assert.equal((await act('buyer','cancel')).status,409);
@@ -76,5 +92,22 @@ test('isolated buyer decision privacy, replies, eligibility and connected appoin
  assert.deepEqual(competing.map(r=>r.status),[201,201]);
  const confirmations=await Promise.all(competing.map(r=>call('dealer','/requests/'+r.body.data.id,'PUT',{...timing,action:'confirm',expectedVersion:r.body.data.version})));
  assert.deepEqual(confirmations.map(r=>r.status).sort(),[200,409]);
+ // Actual suspension writes internal notes onto vehicles. No dealer response may expose them.
+ const profile=await Profile.findOne({user:users.dealer._id});
+ const internalNote='Private moderation investigation details for regression testing';
+ const moderation=require('../services/moderationService').createModerationService({DealerProfile:Profile,Car,transaction:fn=>mongoose.connection.transaction(fn)});
+ await moderation.dealer(profile.id,'suspend',{expectedUpdatedAt:profile.updatedAt.toISOString(),note:internalNote},users.admin._id);
+ assert((await Car.findById(car.id)).reviewHistory.some(entry=>entry.note===internalNote));
+ for(const url of ['/dealer-cars/'+car.id,'/dealer-cars/my']) {
+   const response=await call('dealer',url);assert.equal(response.status,200);
+   assert.equal(JSON.stringify(response.body).includes(internalNote),false);
+   assert.equal(JSON.stringify(response.body).includes('reviewHistory'),false);
+ }
+ const ownedCar=(await call('dealer','/dealer-cars/'+car.id)).body.data;
+ const labelled=await call('dealer','/dealer-cars/'+car.id+'/photo-categories','PUT',{expectedVersion:ownedCar.__v,categories:[{url:'/uploads/car.jpg',category:'exterior'}]});
+ assert.equal(labelled.status,200);assert.equal(labelled.body.data.photoCategories[0].category,'exterior');
+ assert.equal(JSON.stringify(labelled.body).includes(internalNote),false);
+ assert.equal((await call('buyer','/dealer-cars/'+car.id)).status,403);
+
  }finally{if(server)await new Promise(r=>server.close(r));if(mongoose.connection.readyState===1)await mongoose.connection.dropDatabase();await mongoose.disconnect();await fs.rm(dir,{recursive:true,force:true});for(const k of Object.keys(process.env))if(!(k in previous))delete process.env[k];Object.assign(process.env,previous);}
 });

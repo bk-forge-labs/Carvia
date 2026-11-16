@@ -1,0 +1,17 @@
+✔ dealer listing destinations survive sign-in (0.928959ms)
+✔ external and unrecognised destinations are rejected (0.090292ms)
+✔ buyer destinations and enquiry anchor stay supported (0.081875ms)
+✔ known administrator destinations survive sign-in without allowing arbitrary admin paths (0.138625ms)
+✔ connected workspace destinations survive sign-in (0.065209ms)
+✔ original reservation and proposed time remain visible across months in display timezone (11.219625ms)
+✔ same-day slots have distinct identities and midnight end does not add another day (0.439708ms)
+✔ calendar weeks are Monday first across year boundaries and months include leap day (1.611084ms)
+✔ editing an existing repeated-hour appointment preserves its occurrence (11.289459ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 188.246916

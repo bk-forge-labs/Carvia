@@ -8,6 +8,7 @@ import {useAuth} from '@/lib/store/auth';
 import {addDays,calendarDays,clock,dayLabel,localTime,occurrenceFor} from '@/lib/workspace/time';
 import {Dialog,ErrorPanel,LinkFields,Occurrence,mailLabels,useWorkspaceOptions,type Appointment,type Mail,type Options} from './shared';
 import styles from './Operations.module.css';
+import {calendarEntries} from '@/lib/workspace/calendarEntries';
 
 function AppointmentEditor({record,day,zone,options,seedEnquiry,seedTask,close,saved}:{record:Appointment|null;day:string;zone:string;options:Options;seedEnquiry:string;seedTask:string;close:()=>void;saved:(record:Appointment)=>void}) {
   const role=useAuth(s=>s.user?.role);
@@ -55,6 +56,7 @@ function AppointmentEditor({record,day,zone,options,seedEnquiry,seedTask,close,s
   return <Dialog title={record?'Appointment details':'New appointment'} close={close}>
     <form className={styles.form} onSubmit={submit}>
       {seedTask&&!record&&<p className={styles.muted}>Saving will also link this appointment to the follow-up task you opened.</p>}
+      <p className={styles.muted}>This is a private calendar entry. It does not create a buyer-visible appointment. Manage buyer requests in the buyer conversation.</p>{enquiry&&<Link href={'/dealer/enquiries?enquiry='+enquiry+'#conversation-'+enquiry}>Manage buyer appointments</Link>}
       <p className={styles.muted}>Times are entered in the named timezone. Invalid clock-change times are rejected; repeated times require an explicit occurrence.</p>
       {closed&&<p className={styles.badge} data-status={record.status}>{record.status} · read only</p>}
       <fieldset disabled={busy||closed}>
@@ -95,14 +97,7 @@ export default function Calendar() {
   const seedId=requestedId&&/^[a-f0-9]{24}$/i.test(requestedId)?requestedId:null;
   const seed=useQuery({queryKey:['workspace-appointment',user?.id,seedId],queryFn:({signal})=>api<{data:Appointment}>('/workspace/appointments/'+seedId,{signal}),enabled:!!seedId&&!dismissSeed,retry:false,gcTime:0});
   const record=editing!==undefined?editing:!dismissSeed&&seed.data?seed.data.data:undefined;
-  const appointmentsByDay=useMemo(()=>{
-    const grouped=new Map<string,Appointment[]>();
-    for(const item of query.data?.data||[]){
-      const lastDay=localTime(new Date(new Date(item.end).getTime()-1).toISOString(),zone).slice(0,10);
-      for(let day=localTime(item.start,zone).slice(0,10);day<=lastDay;day=addDays(day,1)) grouped.set(day,[...(grouped.get(day)||[]),item]);
-    }
-    return grouped;
-  },[query.data,zone]);
+  const appointmentsByDay=useMemo(()=>calendarEntries(query.data?.data||[],zone),[query.data,zone]);
   const onDay=(day:string)=>appointmentsByDay.get(day)||[];
   function navigate(amount:number) {
     setDateError('');
@@ -114,7 +109,7 @@ export default function Calendar() {
     if(!(event.key in delta))return;event.preventDefault();const next=addDays(day,delta[event.key]);if(next<'2000-01-01'||next>'2100-12-31')return;setSelected(next);if(!days.includes(next))setAnchor(next);requestAnimationFrame(()=>(document.getElementById('calendar-day-'+next)||document.getElementById('calendar-anchor'))?.focus());
   }
   function close(){setEditing(undefined);setDismissSeed(true);}
-  function eventButton(item:Appointment) {return <button key={item._id} className={styles.event} onClick={()=>setEditing(item)}><strong>{item.title}</strong><span>{clock(item.start,zone)}–{clock(item.end,zone)}</span><small>{item.type==='test-drive'?'Test drive':'Meeting'} · {item.status}</small></button>;}
+  function eventButton(item:Appointment) {return <button key={item._id+'-'+item.calendarSlot} className={styles.event} onClick={()=>setEditing(query.data?.data.find(record=>record._id===item._id)||item)}><strong>{item.title}</strong><span>{clock(item.start,zone)}–{clock(item.end,zone)}</span><small>{item.type==='test-drive'?'Test drive':'Meeting'} · {item.calendarSlot==='reserved'?'Original confirmed time — reserved':item.status==='reschedule-proposed'?'Proposed time — awaiting buyer':item.status}</small></button>;}
   function saved(item:Appointment) {close();if(params.get('enquiry')||params.get('task'))router.replace('/calendar',{scroll:false});const day=localTime(item.start,zone).slice(0,10);setAnchor(day);setSelected(day);setNotice('Appointment saved. Confirmation email is a separate action.');void client.invalidateQueries({queryKey:['workspace-appointments',user?.id]});void client.invalidateQueries({queryKey:['workspace-options',user?.id]});}
   return <main className={styles.page}>
     <p className={styles.eyebrow}>{user?.role==='admin'?'Administration':'Dealer workspace'} / Calendar</p><h1>Your calendar, considered.</h1><p className={styles.intro}>Private meetings and test drives. Only your appointments appear here; administrator access does not open dealer calendars.</p>
@@ -129,7 +124,7 @@ export default function Calendar() {
     {query.isPending?<p role='status'>Loading calendar…</p>:query.isError?<ErrorPanel error={query.error} retry={()=>void query.refetch()}/>:<>
       {query.data.truncated&&<p role='alert'>More than 500 appointments are in this range. Switch to week or day view to see a narrower range.</p>}
       {!query.data.data.length&&<p role='status'>No appointments in this period. Create a meeting or test drive to begin.</p>}
-      {view==='month'?<><div className={styles.month}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><div className={styles.weekday} key={day}>{day}</div>)}{days.map(day=>{const events=onDay(day);return <button key={day} disabled={day<'2000-01-01'||day>'2100-12-31'} id={'calendar-day-'+day} tabIndex={day===selected?0:-1} onKeyDown={event=>selectDayWithKey(event,day)} className={styles.day} data-selected={day===selected} data-outside={day.slice(0,7)!==anchor.slice(0,7)} aria-pressed={day===selected} aria-label={dayLabel(day)+', '+events.length+' appointments'} onClick={()=>setSelected(day)}><strong>{Number(day.slice(-2))}</strong>{events.length>0&&<span>{events.length} records</span>}{events.slice(0,2).map(item=><span className={styles.eventTitle} key={item._id}>{item.title}</span>)}</button>;})}</div><section className={styles.agenda} aria-label='Selected day appointments'><h2>{dayLabel(selected)}</h2>{onDay(selected).length?onDay(selected).map(eventButton):<p className={styles.muted}>No appointments on this day.</p>}<button onClick={()=>setEditing(null)}>Add appointment on selected day</button></section></>:view==='week'?<div className={styles.week}>{days.map(day=><section key={day}><h2>{dayLabel(day,{weekday:'short',day:'numeric',month:'short'})}</h2>{onDay(day).length?onDay(day).map(eventButton):<p className={styles.muted}>No appointments</p>}</section>)}</div>:<section aria-label='Day appointments'>{onDay(anchor).length?onDay(anchor).map(eventButton):<p className={styles.muted}>No appointments on this day.</p>}</section>}
+      {view==='month'?<><div className={styles.month}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><div className={styles.weekday} key={day}>{day}</div>)}{days.map(day=>{const events=onDay(day);return <button key={day} disabled={day<'2000-01-01'||day>'2100-12-31'} id={'calendar-day-'+day} tabIndex={day===selected?0:-1} onKeyDown={event=>selectDayWithKey(event,day)} className={styles.day} data-selected={day===selected} data-outside={day.slice(0,7)!==anchor.slice(0,7)} aria-pressed={day===selected} aria-label={dayLabel(day)+', '+events.length+' appointments'} onClick={()=>setSelected(day)}><strong>{Number(day.slice(-2))}</strong>{events.length>0&&<span>{events.length} records</span>}{events.slice(0,2).map(item=><span className={styles.eventTitle} key={item._id+'-'+item.calendarSlot}>{item.title}{item.calendarSlot==='reserved'?' · Reserved':''}</span>)}</button>;})}</div><section className={styles.agenda} aria-label='Selected day appointments'><h2>{dayLabel(selected)}</h2>{onDay(selected).length?onDay(selected).map(eventButton):<p className={styles.muted}>No appointments on this day.</p>}<button onClick={()=>setEditing(null)}>Add appointment on selected day</button></section></>:view==='week'?<div className={styles.week}>{days.map(day=><section key={day}><h2>{dayLabel(day,{weekday:'short',day:'numeric',month:'short'})}</h2>{onDay(day).length?onDay(day).map(eventButton):<p className={styles.muted}>No appointments</p>}</section>)}</div>:<section aria-label='Day appointments'>{onDay(anchor).length?onDay(anchor).map(eventButton):<p className={styles.muted}>No appointments on this day.</p>}</section>}
     </>}
     {record!==undefined&&(options.isPending?<p role='status'>Loading editor links…</p>:options.data&&<AppointmentEditor key={record?record._id+'-'+record.__v:'new'} record={record} day={view==='month'?selected:anchor} zone={zone} options={options.data} seedEnquiry={params.get('enquiry')||''} seedTask={params.get('task')||''} close={close} saved={saved}/>)}
   </main>;

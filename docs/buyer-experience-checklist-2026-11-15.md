@@ -25,3 +25,22 @@ Buyer anonymously discovers three suitable cars; saves/compares them after sign-
 ## Evidence and remaining work
 
 See [current handoff](buyer-experience-handoff-2026-11-15.md), [file manifest](buyer-experience-file-manifest-2026-11-15.md), and [test evidence](evidence/buyer-experience-2026-11-15/). No row with an unfinished acceptance check is declared complete. The unavailable stable browser surface is a verification blocker, not a waiver of scope. Public document authorization is an unresolved infrastructure dependency.
+
+
+## 16 November review correction evidence
+
+This update supplements the original acceptance matrix; it does not close its remaining gates. See [review-fixes-2026-11-16.md](review-fixes-2026-11-16.md).
+
+- B01 / permissions: dealer vehicle responses now use an explicit field allowlist. Real suspension plus dealer read/list/photo-update regression verifies internal notes are absent.
+- B02: calendar ranges include retained reservations; conflict descriptions show the reserved interval. Expired proposals can be replaced with role/version checks and retain the original confirmed slot. API integration and two frontend calendar tests pass. Native final reservation/proposal display remains unverified.
+- B03 / dealer action surfaces: enquiry and task actions open the connected conversation rather than silently creating private appointments; generic calendar entries are explicitly labelled private. Original buyer request text is rendered separately and was observed in native Chrome, including dialog Escape/focus return. Final dealer navigation checks remain unverified.
+- B11: 68 backend tests, zero skipped; 9 frontend tests; TypeScript and isolated Webpack build pass. Lint has zero errors and three existing image warnings. This is engineering QA, not participant validation. Fresh browser access failed part-way through with `noWindowsAvailable`.
+- Runtime dependency: owner API 5050 restart is blocked by Atlas TLS alert 80 under Node 22 and 24. No database switch or security weakening. Isolated QA remains available.
+- Historical push status: owner subsequently authorized pushes through 8374887; the owner subsequently authorized committing and pushing this correction set. Production deployment is not authorized.
+
+
+### Atlas reconnection follow-up — 16 November
+
+After the owner reconnected Atlas, a fresh Node 24 connection and database ping succeeded. The current API was restarted on 5050 using the existing .env. `/api/health` returns 200; `/api/test-drives/summary`, `/api/buyer/decisions` and `/api/workspace/messages` each return 401 without credentials, confirming the routes exist and authentication remains enforced. This supersedes the earlier unavailable-API blocker. No security configuration or database target was changed.
+
+Signed-in browser verification remains open: native Chrome capture failed with ScreenCaptureKit error -3811 (audio/video capture failure). Route availability is verified; authenticated workflow/visual acceptance is not newly claimed. No commit, push or deployment in this follow-up.
