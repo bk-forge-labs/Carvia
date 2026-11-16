@@ -11,10 +11,11 @@ import {useAuth} from '@/lib/store/auth';
 import type {Role} from '@/lib/auth/types';
 import styles from './WorkspaceShell.module.css';
 
-type IconName = 'overview' | 'cars' | 'people' | 'mail' | 'settings' | 'arrow' | 'panel' | 'search' | 'close' | 'plus';
+type IconName = 'home' | 'overview' | 'cars' | 'people' | 'mail' | 'settings' | 'arrow' | 'panel' | 'search' | 'close' | 'plus';
 type Destination = {href: string; label: string; icon: IconName; description: string};
 function Icon({name}: {name: IconName}) {
   const paths: Record<IconName, ReactNode> = {
+    home: <path d='m3 10 9-7 9 7v11h-6v-7H9v7H3V10Z'/>,
     overview: <><rect x='3' y='3' width='7' height='7' rx='2'/><rect x='14' y='3' width='7' height='7' rx='2'/><rect x='3' y='14' width='7' height='7' rx='2'/><rect x='14' y='14' width='7' height='7' rx='2'/></>,
     cars: <><path d='m5 7 2-4h10l2 4 2 3v8H3v-8l2-3Z M3 10h18 M6 14h2m8 0h2 M5 18v3m14-3v3'/></>,
     people: <><circle cx='9' cy='7' r='3'/><path d='M3 21v-3a6 6 0 0 1 12 0v3 M16 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v3'/></>,
@@ -85,6 +86,7 @@ function Workspace({role, path, children}: {role: Role; path: string; children: 
     {href: '/bookings', label: 'Bookings', icon: 'overview', description: 'Your service booking records'},
   ];
   const utilities: Destination[] = [
+    {href: '/', label: 'Back to home', icon: 'home', description: 'Return to the Veltrenne home page'},
     {href: '/account', label: 'Account settings', icon: 'settings', description: 'Profile and account security'},
     {href: '/cars', label: 'Marketplace', icon: 'arrow', description: 'Explore the public vehicle collection'},
   ];

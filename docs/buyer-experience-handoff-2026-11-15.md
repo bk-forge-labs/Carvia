@@ -54,3 +54,9 @@ Preview: `http://127.0.0.1:3021`, API 5081, QA proxy 5082, Mongo replica set 270
 Database additions: BuyerDecision plus indexes; additive Car eligibility/confidence/photo-label/sold fields; Enquiry replies; Appointment public request and retained reservation fields. Existing Appointment/calendar/task/mail infrastructure is reused. No production migration was run. No dependencies, approved product assets or production configuration changed. Synthetic preview assets exist only under temporary QA storage.
 
 [File-by-file purpose manifest](buyer-experience-file-manifest-2026-11-15.md). Local commits are checkpoints, not acceptance. No push, merge, deployment, production sending, external calendar sync or volume deletion is authorized or performed by this work. Next gate is complete engineering/browser evidence, then owner acceptance; production remains separately gated.
+
+## 16 November — sidebar home navigation
+
+Owner requested direct return to the public home page. `WorkspaceShell.tsx` adds a home icon and “Back to home” destination (`/`) to shared utilities, reused by all roles, collapsed-sidebar accessible labels, mobile navigation and quick search. Existing Next Link navigation closes the mobile drawer. No database or asset changes.
+
+Focused ESLint and TypeScript passed. Native Chrome at localhost:3003 showed the new dealer-sidebar link; clicking it returned to `/` and displayed the public hero. Mobile/other-role rendering uses the same destination configuration but was not separately visually audited in this small change. The dealer overview displayed its page-loading error state during verification; the home link still worked. That separate overview error needs diagnosis and is not claimed fixed here.
