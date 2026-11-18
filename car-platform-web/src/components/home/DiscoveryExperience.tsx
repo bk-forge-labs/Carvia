@@ -94,7 +94,7 @@ export default function DiscoveryExperience() {
           <p className={styles.eyebrow}>The Veltrenne Collection · {showBrand ? 'A new perspective' : vehicle === 'cars' ? 'Four wheels' : 'Two wheels'}</p>
           <h1 id='discovery-title'>{showBrand ? 'Your next chapter.' : vehicle === 'cars' ? 'Exceptional cars.' : 'Pure freedom.'}<br />{showBrand ? 'Starts with Veltrenne.' : vehicle === 'cars' ? 'Your next chapter.' : 'Your next ride.'}</h1>
           <p className={styles.description}>{vehicle === 'cars' ? 'Discover remarkable vehicles. Find the one that moves you.' : 'Extraordinary motorcycles. For the roads that call you.'}</p>
-          <a href='#discovery-search' className={styles.heroLink}>Find your {showBrand ? 'next vehicle' : vehicle === 'cars' ? 'next car' : 'next motorcycle'} <Arrow /></a>
+          <div className={styles.heroActions}><a href='#discovery-search' className={styles.heroLink}>Find your {showBrand ? 'next vehicle' : vehicle === 'cars' ? 'next car' : 'next motorcycle'} <Arrow /></a><Link href='/cars#help-me-choose' className={styles.heroSecondary}>Help me choose</Link></div>
         </div>
         <span className={styles.sceneCaption}>{showBrand ? 'VE / The Veltrenne Collection' : vehicle === 'cars' ? '01 / The drive' : '02 / The ride'}</span>
       </section>
@@ -103,10 +103,10 @@ export default function DiscoveryExperience() {
         <form id='discovery-search' onSubmit={submit} className={styles.search} aria-label='Discover vehicles'>
           <div className={styles.searchTop}>
             <div className={styles.vehicleSwitch} role='group' aria-label='Vehicle type'>
-              {(['cars', 'motorcycles'] as const).map(type => <button key={type} type='button' aria-pressed={!showBrand && vehicle === type} onClick={() => { setVehicle(type); setShowBrand(false); }}>{type === 'cars' ? 'Cars' : 'Motorcycles · Coming soon'}</button>)}
+              {(['cars'] as const).map(type => <button key={type} type='button' aria-pressed={!showBrand && vehicle === type} onClick={() => { setVehicle(type); setShowBrand(false); }}>Cars</button>)}
             </div>
             <div className={styles.dealSwitch} role='group' aria-label='Purchase method'>
-              {(['buy', 'lease'] as const).map(type => <button key={type} type='button' aria-pressed={deal === type} onClick={() => setDeal(type)}>{type === 'buy' ? 'Buy' : 'Lease · Coming soon'}</button>)}
+              {(['buy'] as const).map(type => <button key={type} type='button' aria-pressed={deal === type} onClick={() => setDeal(type)}>Buy</button>)}
             </div>
           </div>
           <div className={styles.fields}>

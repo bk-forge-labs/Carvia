@@ -1,6 +1,6 @@
 .header {
-  --champagne: #b7a080;
-  --ivory: #f5f2eb;
+  --champagne: var(--v-accent-dark);
+  --ivory: var(--v-on-dark);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -28,7 +28,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: #c8c5be;
+  color: var(--v-muted-dark);
   font-size: 13px;
   font-weight: 400;
   letter-spacing: .025em;
@@ -78,7 +78,7 @@
 @media (hover: hover) {
   .navLink:hover, .signIn:hover { color: var(--ivory); }
   .navLink:hover::after { transform: scaleX(1); }
-  .join:hover { background: var(--champagne); border-color: var(--champagne); color: #171a1c; }
+  .join:hover { background: var(--champagne); border-color: var(--champagne); color: var(--v-on-action); }
   .join:hover svg { color: inherit; }
   .mobileLink:hover { color: var(--champagne); }
 }
@@ -88,9 +88,9 @@
   .desktopNav, .actions { display: none; }
   .toggle { display: inline-flex; align-items: center; justify-content: center; gap: 14px; min-height: 44px; padding: 0 4px; border: 0; color: var(--ivory); background: transparent; font: inherit; font-size: 12px; letter-spacing: .035em; cursor: pointer; }
   .menuIcon { display: block; width: 22px; height: 24px; color: var(--champagne); }
-  .mobileNav:not([hidden]) { display: block; position: absolute; top: 100%; left: 0; width: 100%; max-height: calc(100dvh - 76px); overflow-y: auto; overscroll-behavior: contain; background: #101213; border-bottom: 1px solid rgba(183, 160, 128, .3); box-shadow: 0 24px 40px rgba(0, 0, 0, .24); }
+  .mobileNav:not([hidden]) { display: block; position: absolute; top: 100%; left: 0; width: 100%; max-height: calc(100dvh - 76px); overflow-y: auto; overscroll-behavior: contain; background: var(--v-navy); border-bottom: 1px solid rgba(183, 160, 128, .3); box-shadow: 0 24px 40px rgba(0, 0, 0, .24); }
   .mobileInner { padding: 28px 24px 30px; }
-  .eyebrow { margin: 0 0 18px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--champagne); }
+  .eyebrow { margin: 0 0 18px; font-size:12px; letter-spacing: .18em; text-transform: uppercase; color: var(--champagne); }
   .mobileLink { display: flex; align-items: center; justify-content: space-between; min-height: 68px; border-bottom: 1px solid rgba(245, 242, 235, .1); color: var(--ivory); font-size: 25px; letter-spacing: -.025em; text-decoration: none; }
   .mobileLink svg { color: var(--champagne); }
   .mobileLink[aria-current='page'] { color: var(--champagne); }
@@ -111,9 +111,16 @@
 .header[data-home='true'][data-scrolled='true'] { background: rgba(17,18,17,.96); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 .header .inner { max-width: none; margin-inline: 6.4%; padding-inline: 0; min-height: 82px; grid-template-columns: 1fr auto auto; gap: 46px; }
 .desktopNav { gap: 44px; }
-.navLink { font-size: 14px; color: #ece6db; }
+.navLink { font-size: 14px; color: var(--v-on-dark); }
 .join { min-width: 176px; min-height: 46px; font-size: 14px; font-weight: 400; }
 @media (min-width:1000px) and (max-width:1100px) { .header .inner { margin-inline: 4%; gap: 24px; } .desktopNav { gap: 22px; } .join { min-width: 132px; } .logo { width: 190px; } }
 @media (max-width:999px) { .header[data-home='true'] { margin-bottom: -77px; } .header .inner { margin-inline: 20px; min-height: 76px; gap: 16px; } .join { min-width: 150px; font-size: 12px; } }
 
 .account{justify-self:end}.header .inner{grid-template-columns:1fr auto auto auto;gap:24px}.desktopNav{gap:26px}.actions{gap:16px}.header .join{min-width:140px}@media(min-width:1000px) and (max-width:1200px){.header .inner{margin-inline:3%;gap:18px}.desktopNav{gap:18px}.logo{width:180px}.navLink{font-size:12px}.header .join{min-width:110px;padding:0 12px;font-size:12px}}@media(max-width:999px){.account{margin-left:auto}.header .inner{gap:14px}.toggle{gap:6px}}@media(max-width:600px){.logo{width:150px}.toggle>span{display:none}.header .inner{margin-inline:16px;gap:12px}}
+
+.header { --champagne:var(--v-accent-dark); --ivory:var(--v-on-dark); background:var(--v-navy); border-bottom-color:var(--v-dark-border); }
+.header[data-home='true'],.header[data-home='true'][data-scrolled='true'] { background:var(--v-navy); }
+.header[data-home='true']::after { background:var(--v-dark-border); }
+.join { border-color:var(--v-dark-border-strong); background:transparent; }
+.join:hover { background:var(--v-dark-selected); color:var(--v-on-dark); }
+.mobileNav:not([hidden]) { background:var(--v-navy); }

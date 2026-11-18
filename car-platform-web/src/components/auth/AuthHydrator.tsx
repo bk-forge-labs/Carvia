@@ -38,5 +38,5 @@ export default function AuthHydrator() {
     };
   }, [setUser, clearUser, setHydrated, setSessionError, attempt]);
 
-  return sessionError ? <div role='alert' style={{padding:'12px 6%',background:'#24271f',color:'#f4f0e8'}}>We couldn’t check your account connection. <button type='button' onClick={() => setAttempt(value => value + 1)} style={{textDecoration:'underline',marginLeft:12}}>Try again</button></div> : null;
+  return sessionError ? <div role='alert' style={{padding:'12px 6%',background:'var(--v-surface)',color:'var(--v-error)'}}>We couldn’t check your account connection. <button type='button' onClick={() => setAttempt(value => value + 1)} style={{textDecoration:'underline',marginLeft:12}}>Try again</button></div> : null;
 }

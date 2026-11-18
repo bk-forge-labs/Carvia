@@ -14,7 +14,7 @@ export default function CarCard({ car, action, searchQuery }: { car: Car; action
   const reasons=([['transmission','Transmission'],['fuelType','Fuel'],['bodyStyle','Body type']] as const).filter(([key])=>preferences.has(key)).map(([key,label])=>`${label}: ${car[key]||'not supplied'}${car[key]?car[key]===preferences.get(key)?' — matches your preference':' — differs from your preference':''}`);
   return <article className={styles.card}>
     <Link href={href} className={styles.media} aria-label={`View ${car.title}`}><VehiclePhoto key={src} src={src} title={car.title} /></Link>
-    <div className={styles.content}><p className={styles.make}>{car.brand}</p>{car.isDemo && <p style={{color:'#ddc49e',fontSize:12,marginBottom:12}}>Sample vehicle—not for sale</p>}<h2><Link href={href}>{car.title}</Link></h2>
+    <div className={styles.content}><p className={styles.make}>{car.brand}</p>{car.isDemo && <p className={styles.sample}>Sample vehicle—not for sale</p>}<h2><Link href={href}>{car.title}</Link></h2>
       <p className={styles.price}>{typeof car.price === 'number' ? money.format(car.price) : 'Price on request'}</p>
       <dl className={styles.specs}>{[[car.year, 'Year'], [typeof car.mileage === 'number' ? `${car.mileage.toLocaleString('en-GB')} km` : '', 'Mileage'], [car.fuelType, 'Fuel'], [car.transmission, 'Transmission']].filter(([value]) => value !== '' && value != null).map(([value,label]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       {!!reasons.length&&<p className={styles.location}>{reasons.join(' · ')}</p>}
