@@ -1,6 +1,6 @@
 # Midnight & Copper UI — Phase 1 handoff
 
-Updated 18 November 2026. **UI implemented and available for BK review; exhaustive acceptance remains open.**
+Updated 18 November 2026. **BLOCKING image-regression report under investigation. UI acceptance remains open; features and new animation paused.**
 
 ## Authority and sequence
 
@@ -147,3 +147,48 @@ Asana UI tasks 1/4, 2/4, 3/4 and 4/4 track implementation and evidence. Browser 
 ## Delivery status
 
 Local UI implementation is technically checked and visually inspected to the explicit coverage above. **Available for BK design review; not a complete Phase 1 acceptance or launch-readiness claim.** The commit containing this handoff records the validated UI checkpoint. No push, merge or deployment. Remaining acceptance evidence and BK approval are required; Phase 2 and Phase 3 must not start automatically.
+
+
+## Blocking image report — 18 November investigation
+
+BK reports all images missing at `http://127.0.0.1:3021` after `da777e4`. Treat as unresolved until the exact browser failure is reproduced or a successful browser recheck establishes its recovery. Earlier response that images were merely QA fixtures was insufficient to dismiss this report.
+
+### Environment and baseline
+
+- Checkout remains `feat/veltrenne-connected-workspace` at UI commit `da777e4` during investigation. Unrelated build-report draft preserved.
+- Port 3021 serves `/private/tmp/veltrenne-connected-qa/web`, using isolated API 5081 through QA proxy 5082. It is a **synthetic QA preview**, not the owner inventory review URL. Its three BMW fixtures use `buyer-fixture.webp`; no owner photographs were overwritten by this dataset.
+- Owner preview is `http://localhost:3003`, API 5050. This is the correct existing-inventory preview. Do not redirect QA authentication or synthetic-role proxy tokens into the owner API.
+- `git diff 39324f0 da777e4 -- car-platform-web/next.config.ts car-platform-web/public server` is empty: UI commit did not change static assets, image origin configuration or backend upload serving. No whole-UI revert, generated image, replacement photo or new placeholder applied.
+
+### Read-only HTTP evidence (current, not browser network evidence)
+
+| Representative request | Result |
+| --- | --- |
+| `3021/logo/veltrenne/horizontal-gold.svg` | 200, image/svg+xml, 2,584 bytes |
+| `3021/logo/veltrenne/emblem-gold.svg` | 200, image/svg+xml, 597 bytes |
+| `3021/brand/cv/showroom.webp` | 200, image/webp, 110,136 bytes |
+| `3021/brand/carvia-turntable-bk.webp` | 200, image/webp, 262,024 bytes |
+| `3021/brand/discovery/category-sheet.webp` | 200, image/webp, 188,966 bytes |
+| `3021/_next/image?url=%2Fbrand%2Fcv%2Fshowroom.webp&w=1920&q=75` | 200, image/jpeg, 60,725 bytes |
+| `3021/_next/image?url=%2Fbrand%2Fcarvia-turntable-bk.webp&w=1920&q=75` | 200, image/jpeg, 92,212 bytes |
+| `5082/uploads/buyer-fixture.webp` and same path on 5081 | Both 200, image/webp, 8,842 bytes; binary RIFF/WEBP signatures intact |
+| `5082/api/cars` | 200, isolated fixture data |
+| `5050/api/health` | Now 200, `ok:true`; no restart/configuration/security change performed |
+| `5050/api/cars?limit=100` | 200, 26 public listings; all 28 unique referenced media URLs returned 200 image/jpeg |
+| `5050/uploads/1789651194485-229277823.jpeg` | 200, image/jpeg, 44,778 bytes |
+| `5050/uploads/carvia-catalog-01.jpg` | 200, image/jpeg, 153,158 bytes |
+
+Numeric port shorthand above means `http://127.0.0.1:<port>/...`. Raw local diagnostic evidence: `/private/tmp/veltrenne-image-regression/responses.json` and `owner-media.json` (temporary; may expire).
+
+### Cause distinctions and remaining work
+
+- Missing static files/public paths: not reproduced for the representative logo, showroom, dealer hero and category images above.
+- Upload/media proxy: current fixture binary response is intact; owner inventory media requests all succeed. Prior text-decoding proxy defect was already corrected before this report, not a newly verified fix.
+- Optimiser: both tested static optimised requests return valid JPEG signatures. VehiclePhoto uses `unoptimized`; its thumbnail failures cannot automatically be attributed to the Next optimiser.
+- Environment: confirmed dataset mismatch between 3021 and 3003; original inventory is not expected in the synthetic QA database. This explains different car pictures, but does **not** establish the cause of an all-images-missing browser state.
+- API 503: no longer reproduced. The endpoint reports 503 on disconnected database or failed/timed-out database ping; historical evidence does not distinguish which caused the earlier response. Current log records MongoDB connected; no new root-cause claim or repair attributed to this investigation.
+- CSS/container/overlay/rendering: unverified in the newly reported state. No CSS workaround applied without reproducing the visual failure.
+- Browser network and final desktop/tablet/mobile reload/navigation/gallery/buyer/dealer checks remain **blocked**. Native capture returned ScreenCaptureKit -3811; subsequent navigation attempts were interrupted with “The user changed Google Chrome”. Asked BK to keep the Veltrenne window visible. No browser network panel or successful after-fix pixels observed in this investigation.
+- Server development logs contain prior image LCP notices and Grammarly body-attribute hydration mismatch; these do not prove this image regression's cause.
+
+**No verified code fix yet.** Commit this investigation as evidence only; do not call the image regression resolved or the UI accepted. Resume exact-browser reproduction when control is stable, inspect failed requests, then make and visually verify the smallest evidence-backed correction. No push/deployment or owner database mutation.
