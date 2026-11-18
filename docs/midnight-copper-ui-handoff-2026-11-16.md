@@ -192,3 +192,34 @@ Numeric port shorthand above means `http://127.0.0.1:<port>/...`. Raw local diag
 - Server development logs contain prior image LCP notices and Grammarly body-attribute hydration mismatch; these do not prove this image regression's cause.
 
 **No verified code fix yet.** Commit this investigation as evidence only; do not call the image regression resolved or the UI accepted. Resume exact-browser reproduction when control is stable, inspect failed requests, then make and visually verify the smallest evidence-backed correction. No push/deployment or owner database mutation.
+
+### Browser recheck after BK restored the visible window
+
+The capture blocker above was subsequently overcome. Native Chrome screenshots in this investigation show the current images rendering; the reported all-images-missing state was **not reproduced**. This is a recovery observation, not evidence of a new application repair or of the historical cause.
+
+| Browser inspection | Observed result |
+| --- | --- |
+| 3021 homepage, 1440 / 768 / 390 CSS px | Protected gold header logo and showroom background/emblem visibly rendered. Selecting Cars reveals the existing car scene and body-style section; category photographs rendered at all three widths. |
+| 3021 homepage latest arrivals | Existing synthetic fixture thumbnails rendered at desktop and tablet; phone catalogue thumbnails checked separately below. |
+| 3021 `/cars`, 1440 / 768 / 390 | Catalogue fixture thumbnails visibly rendered after scrolling into view. |
+| 3021 `/cars/6afa217002704b2ce920df54`, same widths | Main gallery photograph rendered at all three widths. This fixture has one photograph, not a multi-photo gallery test. |
+| 3021 `/buyer/favorites`, same widths | Saved-car photographs rendered after scrolling past decision notes. |
+| 3021 `/dealer/cars`, same widths | Dealer inventory thumbnails visibly rendered. |
+| 3021 `/#for-dealers`, same widths | Existing Porsche showroom promotional image rendered, including phone after scrolling. |
+| 3003 `/cars/6aabe8ea38be7fdb2667c592`, full desktop window | Original uploaded first gallery photograph visibly rendered; page reports Photograph 1 / 3. Owner data was not edited. |
+
+Screenshots were directly inspected in the browser tool transcript. These are scoped observations, not an archived screenshot suite or full UI acceptance. Navigation between the listed routes and a reload of the direct 3021 homepage succeeded.
+
+Chrome DevTools Network on the direct `http://127.0.0.1:3021/` reload showed:
+
+- `http://127.0.0.1:5082/uploads/buyer-fixture.webp`: **200**, WEBP, 8.8 kB resource / 9.2 kB transferred.
+- `/brand/cv/carvia-cv.glb`: **304 Not Modified**, 916 kB resource.
+- `/brand/cv/studio.hdr`: **304 Not Modified**, 411 kB resource.
+- `/logo/veltrenne/emblem-gold.svg`: **304 Not Modified**, 0.6 kB resource.
+- `http://127.0.0.1:5082/api/cars?&limit=1` and `/api/cars?`: **200**.
+
+304 responses are normal cache validation, not missing files. No failed image request was captured in this recheck. The native DevTools filter did not reliably narrow the table, so this is representative request evidence, not a claim that every browser request was exhaustively audited. The existing development issue badge remains visible; previous logs associate a hydration mismatch with injected Grammarly attributes, which does not establish an image failure.
+
+**Disposition:** current representative image rendering passes; historical regression cause remains unconfirmed. No source/configuration/asset fix was justified by these results. Only this handoff changed in this continuation. No tests/build rerun for this documentation-only update; the earlier UI test results remain historical evidence. UI tasks 3/4 and 4/4 remain incomplete, with new feature and animation phases paused.
+
+**Remaining coverage:** owner-data phone/tablet views and all three owner gallery photographs, full reload/navigation permutations, dealer photo-management editor, and the broader outstanding UI acceptance matrix. If the missing-image state returns, capture its exact URL and failed Network request while it is present; do not replace images or infer a cause from the earlier API 503. Correct existing-inventory review URL: **http://localhost:3003**. **http://127.0.0.1:3021** remains the isolated synthetic QA preview.
